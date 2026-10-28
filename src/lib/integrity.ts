@@ -1,0 +1,21 @@
+// Human labels for the Daily Stock Integrity Monitor's check codes.
+export const CHECK_LABELS: Record<string, string> = {
+  LEDGER_BALANCE_MISMATCH: 'Ledger ≠ stored balance',
+  NEGATIVE_STOCK: 'Negative stock',
+  HISTORICAL_RECORD_CHANGED: 'Historical record changed',
+  UNEXPLAINED_BALANCE_CHANGE: 'Unexplained balance change',
+  LEDGER_SEQUENCE_BREAK: 'Ledger sequence broken (missing / altered rows)',
+  ORPHANED_LEDGER: 'Orphaned ledger entry',
+  INCOMPLETE_TRANSACTION: 'Incomplete transaction record',
+  INVALID_UNIT_CONVERSION: 'Invalid unit conversion',
+  INVALID_QUANTITY: 'Invalid quantity',
+  INVALID_REFERENCE: 'Invalid company / warehouse reference',
+  TRANSFER_ACCOUNTING: 'Incorrect transfer accounting',
+  TRANSFER_OVERDUE: 'Transfer not received in time',
+  POSSIBLE_REPEAT_WITHDRAWAL: 'Possible repeat withdrawal',
+  DUPLICATE_TRANSACTION: 'Duplicate / conflicting transaction',
+  UNUSUAL_ADJUSTMENT: 'Unusual adjustment',
+  UNAPPROVED_ADJUSTMENT: 'Unapproved adjustment',
+  SUSPICIOUS_ACTIVITY: 'Suspicious / unexplained activity',
+  MONITOR_FAILURE: 'Monitoring failure (check failed, skipped or stale)',
+};
