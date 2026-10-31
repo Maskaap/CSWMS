@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useApp } from '@/components/app-context';
@@ -266,7 +267,8 @@ export default function ReportsPage() {
   if (!can('reports.view')) return <PageHeader title="Reports" description="You do not have permission to view reports." />;
   return (
     <>
-      <PageHeader title="Reports" description="Built live from the database records you are authorised to see. Export to Excel, CSV or PDF." />
+      <PageHeader title="Reports" description="Built live from the database records you are authorised to see. Export to Excel, CSV or PDF."
+        actions={can('cost.view') ? <Link href="/reports/accounting" className="inline-flex h-10 items-center rounded-md border border-navy-900 bg-navy-900 px-4 text-sm font-medium text-white hover:bg-navy-800">Accounting export (Xero / Sage)</Link> : null} />
       <div className="grid gap-6 lg:grid-cols-[16rem_1fr]">
         <nav className="space-y-4" aria-label="Reports">
           {[...new Set(visible.map((r) => r.group))].map((g) => (

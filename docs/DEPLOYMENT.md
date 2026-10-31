@@ -59,6 +59,7 @@ Recommended environments: **staging** (a separate Supabase project + Vercel prev
    | `CRON_SECRET` | long random string (`openssl rand -hex 32`) |
    | `RESEND_API_KEY` | Resend API key (for alert e-mails) |
    | `ALERT_EMAIL_FROM` | e.g. `CSWMS Alerts <alerts@yourdomain.co.za>` (verified domain) |
+   | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | Optional — WhatsApp alerts (§ 4a). `WHATSAPP_TEMPLATE` / `WHATSAPP_TEMPLATE_LANG` default to `cswms_alert` / `en` |
 
 5. Deploy, then add the custom domain `stock.yourdomain.co.za` (Settings → Domains) and update your DNS as instructed.
 6. Never commit `.env*` files; they are git-ignored.
@@ -68,6 +69,19 @@ Recommended environments: **staging** (a separate Supabase project + Vercel prev
 1. Create a Resend account for the business, verify `yourdomain.co.za` (SPF/DKIM DNS records).
 2. Create an API key → `RESEND_API_KEY`. The `/api/cron` route delivers queued alert e-mails every run and records failures.
 3. In CSWMS: *System Administration → Settings → alerts* set **alerts.email_enabled = Yes**. Warning and critical alerts are then e-mailed to everyone whose role includes *receive alerts* (`alerts.receive`) for the affected warehouse, branch or company; escalated issues also go to head-office roles with `alerts.escalation`. The daily integrity summary is controlled by `alerts.daily_summary_enabled`.
+
+### 4a. WhatsApp alerts (optional)
+
+1. In Meta Business Manager create a WhatsApp Business account and a phone number for the Cloud API; create a **permanent access token** (system user) with `whatsapp_business_messaging`.
+2. Create a message template named `cswms_alert` (category *Utility*, language English) with the body
+   `CSWMS alert: {{1}} — {{2}}` and wait for approval.
+3. Vercel → Environment Variables: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, optionally `WHATSAPP_TEMPLATE` (default `cswms_alert`) and `WHATSAPP_TEMPLATE_LANG` (default `en`). Redeploy.
+4. CSWMS → *System Administration → Settings → alerts*: `alerts.whatsapp_enabled = Yes`. Staff opt in under *My settings*.
+
+### 4b. Prompt delivery on the Vercel Hobby plan
+
+Hobby runs `/api/cron` once a day, so e-mails and WhatsApp messages would wait until 04:00 UTC. Use a free external scheduler (e.g. cron-job.org) to call
+`GET https://<your-app>/api/cron` every 10–15 minutes with the header `Authorization: Bearer <CRON_SECRET>`. Calling it more often is harmless — every step is idempotent. (The integrity check and other database jobs already run every 15 minutes inside the database.)
 
 ## 5. Independent backups — GitHub Actions
 
@@ -115,3 +129,12 @@ Point an uptime monitor (e.g. UptimeRobot, Better Stack) at `https://stock.yourd
 
 Apply `20261027001000_phase3_analytics.sql` then `20261027009000_phase3_security_lockdown.sql` and deploy the matching app. Nothing in stock is changed: Phase 3 only adds read-only functions, settings in the *analytics* category, a new alert type and the daily prediction step in the existing scheduler. Check: *Analytics* opens for a manager; the next morning *Analytics* shows "Stock-out prediction last ran …".
 
+
+## Upgrading to Phase 4 (floor experience)
+
+1. Take a backup and check the integrity status is GREEN.
+2. Supabase → *SQL Editor* → paste and run `supabase/install/cswms_phase4_upgrade.sql` (the three Phase 4 migrations `20261031001000`, `001100`, `009000` in one transaction — if anything fails nothing is changed). It adds columns, tables and functions, creates the private Storage bucket `evidence` and does not change any stock.
+3. Deploy the matching app version. The service worker updates itself (`cswms-v2`).
+4. Check: **My tasks** opens; *My settings* saves a language; on a test warehouse do a withdrawal and press **Undo**; *Setup guide* opens; run an integrity check — it must stay GREEN.
+5. Optional: WhatsApp (§ 4a), external cron (§ 4b), `cycle.items_per_day`, accounting account codes.
+6. API note: `record_count` has three new optional arguments (`p_counted_at`, `p_offline`, `p_method`); existing calls keep working.

@@ -1,4 +1,5 @@
 'use client';
+import { Photos } from '@/components/photos';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowDownToLine, ArrowUpFromLine, Printer, ScanSearch } from 'lucide-react';
@@ -46,6 +47,7 @@ export default function AssetPage() {
             ]} />
           </Panel>
           <div className="no-print"><Actions x={x} checkout={checkout} manage={manage} meId={me?.user?.id} onDone={reload} /></div>
+          <div className="no-print"><Photos entityType="asset" entityId={x.id} title="Condition photos" /></div>
           <Panel title="History (permanent)" padded={false}>
             <Table className="rounded-none border-0">
               <thead><tr><Th>When</Th><Th>What</Th><Th>Where / who</Th><Th>Condition</Th><Th>By</Th><Th>Notes</Th></tr></thead>

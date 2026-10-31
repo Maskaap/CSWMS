@@ -48,7 +48,7 @@ function ReturnForm() {
   return (
     <div className="space-y-4">
       {!line ? <ProductPicker warehouseId={warehouseId} onProduct={(p) => { txn.reset(); setLine(newLine(p, { location_id: p.balances[0]?.location_id ?? defLoc })); }} disabled={locked} /> : <ProductHeader p={line.product} onClear={() => setLine(null)} />}
-      <TxnOutcome state={txn.state} onRetry={txn.retry} savedText={() => cond === 'good' ? 'Returned to available stock.' : 'Returned and recorded as damaged (not available for use).'} />
+      <TxnOutcome allowUndo state={txn.state} onRetry={txn.retry} savedText={() => cond === 'good' ? 'Returned to available stock.' : 'Returned and recorded as damaged (not available for use).'} />
       {line && (
         <Panel>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -98,7 +98,7 @@ function MoveForm() {
     <div className="space-y-4">
       {!line ? <ProductPicker warehouseId={warehouseId} onProduct={(p) => { txn.reset(); const s = p.balances.find((b) => Number(b.qty) > 0 && b.status === 'available'); setLine(newLine(p, { location_id: s?.location_id ?? '', owner_company_id: s?.owner_company_id, status: 'available', to_location_id: '' })); }} disabled={locked} />
         : <ProductHeader p={line.product} onClear={() => setLine(null)} />}
-      <TxnOutcome state={txn.state} onRetry={txn.retry} savedText={() => 'Moved. Warehouse total is unchanged.'} />
+      <TxnOutcome allowUndo state={txn.state} onRetry={txn.retry} savedText={() => 'Moved. Warehouse total is unchanged.'} />
       {line && (
         <Panel>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -143,7 +143,7 @@ function StatusForm() {
     <div className="space-y-4">
       {!line ? <ProductPicker warehouseId={warehouseId} onProduct={(p) => { txn.reset(); const s = p.balances.find((b) => Number(b.qty) > 0 && b.status !== 'in_transit'); setLine(newLine(p, { location_id: s?.location_id ?? '', owner_company_id: s?.owner_company_id, status: s?.status ?? 'available' })); }} disabled={locked} />
         : <ProductHeader p={line.product} onClear={() => setLine(null)} />}
-      <TxnOutcome state={txn.state} onRetry={txn.retry} savedText={() => 'Status changed. Total stock is unchanged; available stock reflects the new status.'} />
+      <TxnOutcome allowUndo state={txn.state} onRetry={txn.retry} savedText={() => 'Status changed. Total stock is unchanged; available stock reflects the new status.'} />
       {line && (
         <Panel>
           <div className="grid gap-4 sm:grid-cols-2">

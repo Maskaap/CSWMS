@@ -10,11 +10,13 @@ import { useRpc } from '@/hooks/use-rows';
 import { useTransaction } from '@/hooks/use-transaction';
 import { fmtDateTime, fmtQty, STATUS_LABELS, TXN_LABELS } from '@/lib/format';
 import { TxnOutcome } from '@/components/txn-outcome';
+import { Photos } from '@/components/photos';
+import { UndoButton } from '@/components/undo';
 
 type Detail = {
   id: string; txn_no: string; txn_type: string; status: string; warehouse_id: string; warehouse_code: string; warehouse_name: string; branch_code: string; company_code: string;
   reference: string | null; notes: string | null; reason_label: string | null; supplier_name: string | null; created_at: string; created_by_name: string;
-  posted_at: string | null; posted_by_name: string | null; is_unusual: boolean; unusual_info: unknown; related_txn_id: string | null; related_txn_no: string | null;
+  posted_at: string | null; posted_by_name: string | null; created_by?: string; is_unusual: boolean; unusual_info: unknown; related_txn_id: string | null; related_txn_no: string | null;
   transfer_id: string | null; stocktake_id: string | null; reversed_by: { id: string; txn_no: string } | null;
   approval: { id: string; status: string; summary: string; requested_by_name?: string; decided_by_name?: string; decision_note?: string; decided_at?: string } | null;
   lines: { line_no: number; sku: string; description: string; location: string; to_location: string | null; owner: string; status: string; to_status: string | null; entered_qty: number; entered_uom: string; qty_base: number; base_uom: string }[];
@@ -24,7 +26,7 @@ type Detail = {
 
 export default function TransactionPage() {
   const { id } = useParams<{ id: string }>();
-  const { can } = useApp();
+  const { can, me } = useApp();
   const { data: t, loading, error, reload } = useRpc<Detail>('t' + id, 'transaction_detail', { p_txn_id: id });
   const rev = useTransaction('request_reversal');
   const [showRev, setShowRev] = useState(false);
@@ -91,6 +93,10 @@ export default function TransactionPage() {
         )}
         <TxnOutcome state={rev.state} onRetry={rev.retry} savedText={() => 'Reversal requested. It will be posted once a manager approves it.'} />
         <ActionResult error={null} />
+        <Photos entityType="txn" entityId={t.id} title="Photos (damage, delivery note, condition)" />
+        {t.status === 'posted' && me?.user?.id && t.created_by === me.user.id && ['receipt', 'withdrawal', 'return', 'move', 'status_change'].includes(t.txn_type) && !t.reversed_by && (
+          <UndoButton txnId={t.id} txnNo={t.txn_no} postedAt={t.posted_at} onDone={reload} />
+        )}
       </div>
     </>
   );

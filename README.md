@@ -70,6 +70,21 @@ A secure, web-based inventory system for a multi-company group operating across 
 | 31 | Performance reporting: warehouse KPIs (turnover, days of stock, count accuracy, correction rate, PO on-time, approval speed) and supplier scorecard | ✅ Complete, tested |
 | — | Production integration; e-mailing POs to suppliers | 🔶 Not in scope of the three phases — candidates for a later phase |
 
+## Feature status — Phase 4 (floor experience)
+
+| # | Feature | Status |
+|---|---|---|
+| 32 | Offline counting: counts kept on the phone (IndexedDB) and synced once each when the signal returns; late counts handled; counting screens available without signal | ✅ Complete, tested end to end (offline → online) |
+| 33 | Guided count: bin by bin in walking order, scan = +1 (pack barcodes add the pack), typed bulk quantities, "bin empty", beep / vibration / colour flash | ✅ Complete, tested end to end |
+| 34 | Cycle counting by A/B/C class (manual or automatic every working day), alongside the monthly stocktake | ✅ Complete, tested |
+| 35 | "My tasks" home: counts with progress, tools held, transfers to receive, approvals, messages, recent undoable transactions | ✅ Complete, tested |
+| 36 | Languages for floor screens (English, Afrikaans, isiZulu, isiXhosa) and large-text mode | ✅ Complete, tested · translations to be read by a first-language speaker |
+| 37 | WhatsApp alerts (Cloud API, opt-in per person, chosen severity) | ✅ Complete, tested to the outbox · live sending needs a Meta template |
+| 38 | Setup guide (step status, bulk bin generator, counting route) and training warehouse with practice stock | ✅ Complete, tested |
+| 39 | Quick self-correction: undo your own transaction within 10 minutes, fully audited | ✅ Complete, tested end to end |
+| 40 | Photo evidence on transactions, tools and stocktakes (private storage, short-lived links) | ✅ Complete, tested in the database · upload path to verify on Supabase Storage |
+| 41 | Accounting journal export for Xero and Sage; weekly management summary e-mail | ✅ Complete, tested (journal balances) |
+
 ## Quick start (developers)
 
 ```bash

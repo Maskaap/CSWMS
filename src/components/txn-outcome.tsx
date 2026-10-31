@@ -3,10 +3,13 @@ import Link from 'next/link';
 import { RotateCcw } from 'lucide-react';
 import type { TxnState } from '@/hooks/use-transaction';
 import { Button, Notice } from './ui';
+import { UndoButton } from './undo';
 
 /** Shows the definitive result of a stock transaction. "Saved" only after database confirmation. */
-export function TxnOutcome({ state, onRetry, onNew, savedText }: {
+export function TxnOutcome({ state, onRetry, onNew, savedText, allowUndo }: {
   state: TxnState; onRetry: () => void; onNew?: () => void; savedText?: (r: Record<string, unknown>) => React.ReactNode;
+  /** offer the "Oops — undo" button for a posted receipt / withdrawal / return / move / status change */
+  allowUndo?: boolean;
 }) {
   if (state.phase === 'idle') return null;
   if (state.phase === 'saving') return <Notice tone="info" title="Saving…">Waiting for the database to confirm. Do not close this page.</Notice>;
@@ -21,6 +24,9 @@ export function TxnOutcome({ state, onRetry, onNew, savedText }: {
           {typeof r.transfer_id === 'string' && <Link className="text-sm font-medium text-navy-800 underline" href={`/transfers/${r.transfer_id}`}>View transfer</Link>}
           {onNew && <button type="button" onClick={onNew} className="text-sm font-medium text-navy-800 underline">Start a new one</button>}
         </div>
+        {allowUndo && r.status === 'posted' && typeof r.txn_id === 'string' && r.duplicate !== true && (
+          <div className="mt-3"><UndoButton txnId={r.txn_id} txnNo={String(r.txn_no ?? '')} postedAt={typeof r.posted_at === 'string' ? r.posted_at : undefined} /></div>
+        )}
       </Notice>
     );
   }

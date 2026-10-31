@@ -1,6 +1,6 @@
-# CSWMS — Test Report (Phases 1–3)
+# CSWMS — Test Report (Phases 1–4)
 
-Generated from the recorded test runs on **26/10/2026**. Both suites were run from a freshly created database. Re-run at any time — see *How to re-run* at the end.
+Generated from the recorded test runs on **26/10/2026**, updated with the Phase 4 runs on **30/10/2026**. Both suites were run from a freshly created database. Re-run at any time — see *How to re-run* at the end.
 
 ## Summary
 
@@ -9,9 +9,10 @@ Generated from the recorded test runs on **26/10/2026**. Both suites were run fr
 | Database (`tests/db`) | Every stock rule, permission and the Daily Stock Integrity Monitor, executed exactly as Supabase executes them (role `authenticated`, JWT claims, one transaction per call) on PostgreSQL 16 | **68** | 0 |
 | Database — Phase 2 (`tests/db/run-phase2-tests.mjs`) | Purchasing, multi-level approvals, tools & equipment, reservations, notification preferences, digests, scheduled housekeeping — on its own fresh database | **27** | 0 |
 | Database — Phase 3 (`tests/db/run-phase3-tests.mjs`) | Analytics and predictive management on 14 months of history (85 real transactions, posted then backdated with hashes recomputed); every expected answer computed independently | **15** | 0 |
-| End-to-end (`tests/e2e`) | Production build of the app in a real browser (Chromium), real PostgREST on the test database, eight roles, every screen (Phases 1–3), complete workflows | **127** | 0 |
+| Database — Phase 4 (`tests/db/run-phase4-tests.mjs`) | Offline counting, scan-to-count, empty bins, cycle counts, My tasks, quick undo, photos, personal settings, WhatsApp outbox, training warehouse, bin generator, accounting journal, weekly summary, security | **19** | 0 |
+| End-to-end (`tests/e2e`) | Production build of the app in a real browser (Chromium), real PostgREST on the test database, eight roles, every screen (Phases 1–4), complete workflows including offline counting | **140** | 0 |
 
-**Result: all automated tests pass (237 / 237).** The Phase 1 and Phase 2 suites were re-run after the Phase 3 migrations: no regressions. Items that cannot be proven in an automated sandbox are listed under *Outstanding — verify on staging* and must be signed off before go-live.
+**Result: all automated tests pass (269 / 269).** The Phase 1–3 suites were re-run after the Phase 4 migrations: no regressions. Items that cannot be proven in an automated sandbox are listed under *Outstanding — verify on staging* and must be signed off before go-live.
 
 ## 1. Database suite — passed
 
@@ -190,6 +191,32 @@ All eight analytics tabs plus a job-costing page opened without errors by the Su
 - ✅ Supervisor without price access: no rand amount anywhere on the analytics pages; valuation explains it is restricted; stock controller refused
 - ✅ Screens checked visually with 14 months of data on desktop and at phone width (390 px): axis labels, tooltips, no sideways scrolling
 
+## 2e. Phase 4 — database suite (19 passed)
+
+- ✅ Offline pack: everything needed to count without signal; blind counts hide expected quantities; walk order; pack barcodes with their unit; other warehouses refused
+- ✅ Offline counts keep the phone's time (clamped to cut-off … now), a resent count is stored once, counts older than 72 h refused
+- ✅ Scan to count: +1 per scan, a box barcode adds 12; scans are not flagged as double entries, typed repeats still are
+- ✅ "Bin empty" zeroes every uncounted line once (retry-safe)
+- ✅ Late count (made before counting closed, synced after) accepted, comparison refreshed, supervisor alerted; refused after submission
+- ✅ Cycle count picks A-class items first, starts at once, notifies counters, never repeats open items; runs alongside a full stocktake; scheduler runs the new jobs
+- ✅ My tasks: counts with progress, unread messages; not shown to other warehouses; anonymous refused
+- ✅ Undo: own withdrawal within 10 minutes restores stock, retry-safe, once only, audited, recorded as approved under the self-correction rule; refused for others, after the window, for other types and when switched off
+- ✅ Photos: registered only by permitted users, paths per warehouse, visible only within scope, type and size limits, no direct table access, cannot be deleted
+- ✅ Personal settings: language, text size, SA mobile number normalised (082… → +2782…); WhatsApp only when switched on, opted in and at the chosen severity; escalation reaches critical-only subscribers; outbox claimable by the server only
+- ✅ Training warehouse with 6 bins and 1 042 practice units; setup managers only
+- ✅ Bin generator (snake route, no duplicates) and counting route
+- ✅ Accounting journal balances and its stock account equals the change in stock value
+- ✅ Weekly summary: once per week per person with report access, rand values only for price viewers, not to counters
+- ✅ Nothing new is reachable anonymously; job functions are server-only; integrity check stays free of critical findings after all activity (self-undo included)
+
+## 2f. Phase 4 — end-to-end additions
+
+- ✅ Counter: **Today → Start counting** → guided count → scan +1 → phone taken **offline** → two more scans kept on the phone ("2 waiting to send", database unchanged) → back online → sent automatically: 3 counts, 2 marked as captured offline, total 3, "All counts sent"
+- ✅ Stock controller: withdrawal → **Undo** with reason → stock back to the starting balance; approval recorded as self-correction
+- ✅ Counter switches to isiZulu and large text → My tasks shows *Imisebenzi yami* at 18 px
+- ✅ Setup guide creates 6 bins in snake order; accounting export downloads a balanced Xero CSV
+- ✅ New screens (/tasks, /me, /setup/wizard, /reports/accounting) open without errors for admin, counter and stock controller
+
 ## 3. Mapping to the brief's testing requirements (section 18)
 
 | Requirement | Status | Where |
@@ -235,6 +262,11 @@ These depend on hosted services or physical devices that are not available in an
 | 12 | Printed tool tags survive workshop use | Print a tag from a tool's page on durable label stock; scan it after a week in use |
 | 13 | Analytics speed on your real data (12+ months, all warehouses) | After importing history, open *Analytics* for "All my warehouses" and "Last 365 days"; each tab should load in a few seconds. Add a nightly summary table if not |
 | 14 | Forecast quality | After 2–3 months of live use, compare *Forecast & predictions* with what was actually issued; tune `analytics.service_level_z` and lead times |
+| 15 | Photo upload and viewing on Supabase Storage | Add a photo to a damaged-stock transaction on a phone; open it as a supervisor; confirm a user of another branch cannot open the link |
+| 16 | Offline counting on your phones and Wi-Fi dead spots | Open **Today** with signal, walk into the dead spot, count 10 items, walk back; all counts arrive once. Repeat after closing and reopening the browser while offline |
+| 17 | WhatsApp delivery | After Meta approves the `cswms_alert` template, opt in under *My settings*, trigger a low-stock alert, call */api/cron* |
+| 18 | Afrikaans, isiZulu and isiXhosa wording | A first-language speaker reads Today, the count screen and the undo dialog in each language |
+| 19 | First Xero / Sage import | Import one month's journal into a test company file with your accountant; confirm account codes |
 | 9 | Performance with your real data volumes | Import the real opening stock into staging; time the integrity check (*Check runs* shows duration) |
 
 ## 5. Defects found and fixed during this testing round
@@ -250,6 +282,7 @@ These depend on hosted services or physical devices that are not available in an
 | **Phase 2:** creating a reservation was not retry-safe (no request id), so the new screen's safe-retry call was rejected | A dropped connection plus retry could have reserved stock twice; the screen could not save | `create_reservation` now requires a request id and returns the original result on retry (migration 1300); covered by DB and E2E tests |
 | **Phase 3:** "rising" trend label required > 5 % growth per period, so a genuine ~6 %/month rise under a damped trend showed as "steady" | Misleading trend label | Threshold set to 2 % of the level per 30-day period (projection itself unchanged) |
 | **Phase 3:** chart axis end labels overlapped; charts overflowed at phone width | Unreadable dates; sideways scrolling | Collision-aware labels; charts measure their container |
+| **Phase 4:** the offline sync could stay "locked" after a run that ended at once (phone offline), so counts waited until the page was reloaded | Offline counts not sent when the signal returned | Lock released only after the run finished; a new run starts automatically if counts arrived meanwhile; 15 s timeout per send (found by the E2E offline test) |
 | **Phase 2:** a race when two people acted on the same tool at once | Second action could replay on stale state | Per-tool advisory lock in the asset posting helper |
 
 ## How to re-run
@@ -259,6 +292,7 @@ These depend on hosted services or physical devices that are not available in an
 tests/db/reset.sh && (cd tests/db && npm ci && node run-tests.mjs)
 (cd tests/db && node run-phase2-tests.mjs)      # Phase 2, creates its own fresh database
 (cd tests/db && node run-phase3-tests.mjs)      # Phase 3 analytics on backdated history, own fresh database
+(cd tests/db && node run-phase4-tests.mjs)      # Phase 4 floor experience, own fresh database
 
 # full end-to-end run on a fresh database (needs a PostgREST binary and Playwright + Chromium)
 POSTGREST_BIN=/path/to/postgrest tests/e2e/run-e2e.sh

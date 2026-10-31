@@ -4,17 +4,19 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, Bell, BookmarkCheck, Boxes, Building2, ShoppingCart, Wrench, ClipboardCheck, FileBarChart, LayoutDashboard, TrendingUp,
-  LogOut, Menu, RotateCcw, ScanLine, Settings, ShieldCheck, Stamp, Users, WifiOff, X,
+  ListTodo, LogOut, Menu, RotateCcw, ScanLine, Settings, ShieldCheck, Stamp, UserCog, Users, WifiOff, X,
 } from 'lucide-react';
+import type { Key } from '@/lib/i18n';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import { useOnline } from '@/hooks/use-online';
-import { useApp } from './app-context';
+import { CTX_KEY, useApp } from './app-context';
 import { Button, Select, Spinner, cx } from './ui';
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; show: (can: (p: string) => boolean) => boolean };
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; show: (can: (p: string) => boolean) => boolean; tk?: Key };
 
 // Main menu — order as specified for CSWMS
 const NAV: NavItem[] = [
+  { href: '/tasks', label: 'My tasks', icon: ListTodo, show: () => true },
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, show: () => true },
   { href: '/stock', label: 'All Stock', icon: Boxes, show: (c) => c('stock.view') },
   { href: '/receive', label: 'Receive Stock', icon: ArrowDownToLine, show: (c) => c('stock.receive') },
@@ -37,15 +39,16 @@ const NAV: NavItem[] = [
 
 // Large worker actions shown at the bottom of phones / tablets
 const WORKER: NavItem[] = [
-  { href: '/receive', label: 'Receive', icon: ArrowDownToLine, show: (c) => c('stock.receive') },
-  { href: '/withdraw', label: 'Withdraw', icon: ArrowUpFromLine, show: (c) => c('stock.withdraw') },
-  { href: '/scan', label: 'Look up', icon: ScanLine, show: (c) => c('stock.view') },
-  { href: '/assets', label: 'Tools', icon: Wrench, show: (c) => c('asset.checkout') },
-  { href: '/stocktake', label: 'Count', icon: ClipboardCheck, show: (c) => c('stocktake.count') || c('stocktake.manage') },
+  { href: '/tasks', label: 'Today', tk: 'today', icon: ListTodo, show: () => true },
+  { href: '/receive', label: 'Receive', tk: 'receive', icon: ArrowDownToLine, show: (c) => c('stock.receive') },
+  { href: '/withdraw', label: 'Withdraw', tk: 'withdraw', icon: ArrowUpFromLine, show: (c) => c('stock.withdraw') },
+  { href: '/scan', label: 'Look up', tk: 'look_up', icon: ScanLine, show: (c) => c('stock.view') },
+  { href: '/stocktake', label: 'Count', tk: 'count', icon: ClipboardCheck, show: (c) => c('stocktake.count') || c('stocktake.manage') },
+  { href: '/assets', label: 'Tools', tk: 'tools', icon: Wrench, show: (c) => c('asset.checkout') },
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
-  const { me, loading, error, warehouses, warehouseId, setWarehouseId, can } = useApp();
+  const { me, loading, error, warehouses, warehouseId, warehouse, setWarehouseId, can, t } = useApp();
   const online = useOnline();
   const path = usePathname();
   const router = useRouter();
@@ -64,7 +67,10 @@ export function Shell({ children }: { children: ReactNode }) {
     });
   }, [me, router]);
 
-  const signOut = async () => { await supabaseBrowser().auth.signOut(); router.replace('/login'); };
+  const signOut = async () => {
+    try { localStorage.removeItem(CTX_KEY); } catch { /* ignore */ }
+    await supabaseBrowser().auth.signOut(); router.replace('/login');
+  };
 
   if (loading) return <Spinner label="Loading your workspace…" />;
   if (error) return <div className="p-6"><p className="text-bad-600">Could not load your account: {error}</p><Button className="mt-3" onClick={signOut}>Sign out</Button></div>;
@@ -83,7 +89,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   const c = (p: string) => can(p);
   const items = NAV.filter((n) => n.show(c));
-  const worker = WORKER.filter((n) => n.show(c));
+  const worker = WORKER.filter((n) => n.show(c)).slice(0, 5);
   const active = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
 
   const nav = (
@@ -110,6 +116,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="border-t border-navy-800 p-4 text-sm text-navy-100">
           <div className="font-medium text-white">{me.user?.full_name}</div>
           <div className="truncate text-xs">{me.roles?.map((r) => r.name).join(', ')}</div>
+          <Link href="/me" className="mt-2 mr-3 inline-flex items-center gap-1 text-xs underline"><UserCog className="size-3" />My settings</Link>
           <button onClick={signOut} className="mt-2 inline-flex items-center gap-1 text-xs underline"><LogOut className="size-3" />Sign out</button>
         </div>
       </aside>
@@ -126,6 +133,7 @@ export function Shell({ children }: { children: ReactNode }) {
             {nav}
             <div className="border-t border-navy-800 p-4 text-sm text-navy-100">
               <div className="text-white">{me.user?.full_name}</div>
+              <Link href="/me" className="mt-2 mr-3 inline-flex items-center gap-1 underline"><UserCog className="size-3" />{t('settings')}</Link>
               <button onClick={signOut} className="mt-2 inline-flex items-center gap-1 underline"><LogOut className="size-3" />Sign out</button>
             </div>
           </aside>
@@ -156,7 +164,12 @@ export function Shell({ children }: { children: ReactNode }) {
         </header>
         {!online && (
           <div className="flex items-center gap-2 bg-bad-600 px-4 py-2 text-sm font-medium text-white" role="alert">
-            <WifiOff className="size-4" />Offline — stock transactions are disabled until the connection returns. Nothing is saved offline.
+            <WifiOff className="size-4" />Offline — receiving, issuing and other stock transactions are paused until the connection returns. Stocktake counting keeps working and sends itself later.
+          </div>
+        )}
+        {warehouse?.is_training && (
+          <div className="training-stripes px-4 py-1" role="note">
+            <div className="mx-auto w-fit rounded bg-navy-950 px-3 py-1 text-center text-sm font-bold text-signal-300">{t('training_banner')}</div>
           </div>
         )}
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
@@ -167,7 +180,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid border-t border-navy-800 bg-navy-900 lg:hidden" style={{ gridTemplateColumns: `repeat(${worker.length}, minmax(0, 1fr))` }} aria-label="Quick actions">
           {worker.map((w) => (
             <Link key={w.href} href={w.href} className={cx('flex flex-col items-center gap-1 py-2.5 text-xs font-medium', active(w.href) ? 'text-signal-400' : 'text-white')}>
-              <w.icon className="size-6" />{w.label}
+              <w.icon className="size-6" />{w.tk ? t(w.tk) : w.label}
             </Link>
           ))}
         </nav>

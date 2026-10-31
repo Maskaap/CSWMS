@@ -131,6 +131,29 @@ Each person sets their own delivery under *Low Stock & Alerts → Notification s
 
 Every tab exports to Excel, CSV and PDF; the same analyses are also under *Reports → Analytics*. Each morning (after 05:00) the system raises a **Likely to run out** alert for items that will run out before a reorder could arrive; it closes itself once an order covers the gap. Tune the rules under *Settings → analytics* (dead-stock days, fast/slow thresholds, default lead time, service level, prediction time, alerts on/off). Forecasts improve as purchase orders build up real lead times.
 
+## 8b. Floor experience (Phase 4)
+
+**Setup guide** (*Company & Warehouse Setup → Setup guide*) shows each start-up step with its status and adds three tools:
+* **Create many bins at once** — prefix, aisles, bays per aisle, levels (e.g. `A1-01` … `A3-10-2`). Bins are created in a snake walking route (up one aisle, down the next) with matching label codes (`LOC-<warehouse>-<bin>`). Existing bins are skipped.
+* **Counting route** — move bins up/down and **Save route**; the guided count leads counters through the bins in this order.
+* **Training warehouse** — creates `TRAIN-n` with six practice bins and eight practice items. Give trainees a role on that warehouse only; a striped banner shows whenever it is selected. Exclude `TRAIN-*` warehouses from management reports.
+
+**Cycle counting.** *Monthly Stocktake → Cycle count* creates a blind count of the items most due, by A/B/C class (A = top 80 % of 90-day usage value, counted every `cycle.a_days` = 30 days; B every 60; C every 120). Set `cycle.items_per_day` (e.g. 15) to let the system create one automatically each working day after `cycle.create_time` for every active warehouse with stock; counters are told and see it in **Today**. Cycle counts are reviewed, approved and posted exactly like a monthly stocktake and can run alongside it.
+
+**Offline counting.** Only stocktake counts can be captured offline. Each count keeps the phone's time (never earlier than the cut-off, never in the future) and is refused if older than `counting.offline_max_hours` (72). A count made before counting was closed but arriving afterwards is accepted as **late**, the comparison is refreshed and supervisors get an information alert. Once submitted for approval no more counts are accepted.
+
+**Quick undo.** Staff may undo their own receipt (not against a PO), withdrawal, return, move or status change within `undo.minutes` (10; 0 = off). It posts a linked reversal and an approval record marked *approved automatically — self-correction rule*, with the person's reason; the integrity monitor treats it as an approved reversal. Find them in the audit log (`SELF_UNDO`) and the adjustment report (type Reversal).
+
+**Photos** are stored in the private Supabase Storage bucket `evidence` (created by the migration). The app server uploads and opens them only after the database has checked the user's warehouse access; links expire after 5 minutes. Up to 10 photos per record, 8 MB each; photos cannot be deleted.
+
+**Languages.** Floor screens are available in English, Afrikaans, isiZulu and isiXhosa (*My settings*). Have a first-language speaker read the Afrikaans, isiZulu and isiXhosa wording once on site (file `src/lib/i18n.ts`) — corrections are a one-line change.
+
+**WhatsApp alerts.** Set up the WhatsApp Cloud API (DEPLOYMENT.md § 4a), then `alerts.whatsapp_enabled = Yes`. People who add their mobile number and opt in under *My settings* receive the alerts their role already receives, at the severity they choose.
+
+**Weekly summary.** Every Monday after 07:00 everyone whose role can run reports and receives alerts gets a plain-text e-mail: last week's receipts and withdrawals, consumption value (price viewers only), low / out / likely-to-run-out counts, waiting approvals, overdue tools, the latest integrity status and the top five jobs. Switch off with `reports.weekly_summary` (needs `alerts.email_enabled`).
+
+**Accounting export.** *Reports → Accounting export (Xero / Sage)*: choose the company and period; CSWMS prepares a balanced daily journal at weighted-average cost (stock received, issued net of returns, moved between companies, adjustments/variances, opening balances) and downloads it as a Xero manual-journal CSV, a Sage journal CSV or Excel. Set the account codes in *Settings → accounting* with your accountant before the first import.
+
 ## 9. System administration
 
 * **Settings** — all business rules (thresholds, working hours, integrity run time and stale limit, transfer transit days, e-mail alerts, approval reminder/escalation hours, PO over-receipt tolerance and overdue grace days, default tool loan days, digest time). Changes are audited.

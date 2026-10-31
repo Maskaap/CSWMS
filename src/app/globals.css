@@ -73,3 +73,12 @@ body {
   .no-print { display: none !important; }
   .print-sheet { padding: 0 !important; }
 }
+
+/* personal text size (My settings) */
+html[data-text="large"] { font-size: 112.5%; }
+html[data-text="xlarge"] { font-size: 125%; }
+
+/* training warehouse */
+.training-stripes {
+  background: repeating-linear-gradient(135deg, var(--color-signal-400) 0 14px, var(--color-navy-950) 14px 28px);
+}

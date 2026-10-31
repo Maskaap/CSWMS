@@ -90,7 +90,7 @@ export default function WithdrawPage() {
         <ProductPicker warehouseId={warehouseId} onProduct={pick} disabled={!allowed || locked} big
           onLocation={(loc) => line && setLine({ ...line, location_id: loc.id, owner_company_id: sources.find((s) => s.location_id === loc.id)?.owner_company_id })} />
 
-        {txn.state.phase === 'saved' && <TxnOutcome state={txn.state} onRetry={txn.retry}
+        {txn.state.phase === 'saved' && <TxnOutcome allowUndo state={txn.state} onRetry={txn.retry}
           savedText={(r) => {
             const m = (r.movements as { balance_after: number }[] | undefined)?.[0];
             return <>Withdrawal saved. Remaining at that location: <b>{fmtQty(m?.balance_after)}</b>. Scan the next item.</>;

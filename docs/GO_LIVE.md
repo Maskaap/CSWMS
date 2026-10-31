@@ -1,6 +1,8 @@
 # CSWMS — Go-live sheet (your projects)
 
-Created for you on 27/10/2026. Full background is in `DEPLOYMENT.md`; this sheet is the short path.
+Created for you on 27/10/2026, updated for Phase 4 on 30/10/2026. Full background is in `DEPLOYMENT.md`; this sheet is the short path.
+
+> **Already installed Phases 1–3?** Do not run the full install again. Run `supabase/install/cswms_phase4_upgrade.sql` once in the SQL Editor instead, then upload the new code (DEPLOYMENT.md → *Upgrading to Phase 4*).
 
 | | |
 |---|---|
@@ -13,7 +15,7 @@ Created for you on 27/10/2026. Full background is in `DEPLOYMENT.md`; this sheet
 ## 1. Database (Supabase) — about 10 minutes
 
 1. Supabase → your project (`xiaxxlsyocfymiezegwt`) → *Database → Extensions* → enable **pg_cron**.
-2. *SQL Editor* → New query → paste the whole of `supabase/install/cswms_full_install.sql` → **Run**. (It is all 15 migrations in order and runs as one script. Alternatively, from the repo: `npx supabase link --project-ref xiaxxlsyocfymiezegwt` then `npx supabase db push`.)
+2. *SQL Editor* → New query → paste the whole of `supabase/install/cswms_full_install.sql` → **Run**. (It is all 18 migrations — Phases 1 to 4 — in order and runs as one script. Alternatively, from the repo: `npx supabase link --project-ref xiaxxlsyocfymiezegwt` then `npx supabase db push`.)
    Check: `select count(*) from cron.job;` returns 1 (the 15-minute integrity scheduler).
 3. *Authentication → Sign In / Providers*: Email on, **Allow new users to sign up: OFF**; Multi-factor: **TOTP on**.
 4. *Authentication → Users → Add user → Send invitation* to **martinhiskia@outlook.com**.
@@ -54,3 +56,9 @@ Created for you on 27/10/2026. Full background is in `DEPLOYMENT.md`; this sheet
 * Vercel Hobby allows a once-a-day cron, so `vercel.json` runs `/api/cron` daily (04:00 UTC); it delivers queued alert e-mails. The **integrity check, reminders, purchasing/tool housekeeping and stock-out predictions run every 15 minutes inside the database (pg_cron)** and do not depend on Vercel. On a Vercel Pro team, change the cron back to `*/15 * * * *` for near-immediate e-mails.
 * New Vercel projects have *Deployment Protection* on for preview URLs; the production address is open. If staff see a Vercel login page, check *Settings → Deployment Protection*.
 * Supabase free-tier projects pause after a week of inactivity and have no daily backups — use the **Pro** plan for production (DEPLOYMENT.md § 2).
+
+## Phase 4 extras (optional, any time)
+
+* **Prompt e-mails / WhatsApp on Hobby:** schedule `GET https://<app>/api/cron` every 10–15 minutes at cron-job.org with header `Authorization: Bearer <CRON_SECRET>` (DEPLOYMENT.md § 4b).
+* **WhatsApp:** Meta Cloud API + template `cswms_alert`, then `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` in Vercel (DEPLOYMENT.md § 4a).
+* **First week:** use *Company & Warehouse Setup → Setup guide* — create bins in bulk, set the counting route, create a training warehouse and let staff practise there first.

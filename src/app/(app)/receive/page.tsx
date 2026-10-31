@@ -146,7 +146,7 @@ export default function ReceivePage() {
               </div>
             </Panel>
           )}
-          <TxnOutcome state={txn.state} onRetry={txn.retry} onNew={txn.reset} />
+          <TxnOutcome allowUndo state={txn.state} onRetry={txn.retry} onNew={txn.reset} />
         </div>
       </div>
     </>

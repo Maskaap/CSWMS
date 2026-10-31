@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { CalendarPlus } from 'lucide-react';
+import { CalendarPlus, RefreshCcw } from 'lucide-react';
+import { callRpc } from '@/hooks/use-transaction';
+import { Notice } from '@/components/ui';
 import { useApp } from '@/components/app-context';
 import { Badge, Button, Field, Input, PageHeader, Panel, Select, Spinner, Stat, StatusBadge, Table, Td, Th } from '@/components/ui';
 import { ActionResult, ExportButtons, LoadError, Tabs } from '@/components/widgets';
@@ -67,6 +69,7 @@ export default function StocktakePage() {
             <Stat label="Overdue" value={stats.overdue} tone={stats.overdue ? 'bad' : undefined} />
           </div>
           {can('stocktake.manage') && <ScheduleForm period={period} onDone={list.reload} />}
+          {can('stocktake.manage') && <CycleCountForm onDone={list.reload} />}
         </>
       )}
 
@@ -147,6 +150,39 @@ function ScheduleForm({ period, onDone }: { period: string; onDone: () => void }
             if (r) { act.setOk(`Scheduled ${r.created ?? r.stocktake_ids?.length ?? ''} stocktake(s).`); onDone(); }
           }}>Schedule</Button>
       </div>
+    </Panel>
+  );
+}
+
+/** Cycle counting: a short, blind count of the items that matter most, picked by A/B/C class. */
+function CycleCountForm({ onDone }: { onDone: () => void }) {
+  const { warehouses, warehouseId, can } = useApp();
+  const mine = warehouses.filter((w) => can('stocktake.manage', w.id));
+  const [wh, setWh] = useState(mine.find((w) => w.id === warehouseId)?.id ?? mine[0]?.id ?? '');
+  const [items, setItems] = useState('15');
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState<{ tone: 'ok' | 'bad' | 'info'; text: React.ReactNode } | null>(null);
+  if (!mine.length) return null;
+  const go = async () => {
+    setBusy(true); setRes(null);
+    const { data, error } = await callRpc<{ created: boolean; stocktake_id?: string; stocktake_no?: string; items?: number; message?: string }>(
+      'create_cycle_count', { p_warehouse_id: wh, p_items: Number(items) || null });
+    setBusy(false);
+    if (error) { setRes({ tone: 'bad', text: error.message }); return; }
+    if (!data?.created) { setRes({ tone: 'info', text: data?.message ?? 'Nothing is due.' }); return; }
+    setRes({ tone: 'ok', text: <>Created <Link className="underline" href={`/stocktake/${data.stocktake_id}`}>{data.stocktake_no}</Link> with {data.items} items — counting has started and the counters were told.</> });
+    onDone();
+  };
+  return (
+    <Panel className="mb-6" title={<span className="flex items-center gap-2"><RefreshCcw className="size-4" />Cycle count (a few items, every working day)</span>}>
+      <p className="mb-3 text-sm text-steel-600">Instead of one big count a month, count a handful of items daily. Fast movers and high-value items (class A) are counted every 30 days,
+        B every 60, C every 120 (System Administration → stocktake settings). Switch on the automatic daily cycle count with the setting <b>cycle.items_per_day</b>.</p>
+      <div className="flex flex-wrap items-end gap-3">
+        <Field label="Cycle-count warehouse"><Select value={wh} onChange={(e) => setWh(e.target.value)} className="w-64">{mine.map((w) => <option key={w.id} value={w.id}>{w.code} — {w.name}</option>)}</Select></Field>
+        <Field label="Items"><Input type="number" min={1} max={500} value={items} onChange={(e) => setItems(e.target.value)} className="w-24" /></Field>
+        <Button variant="navy" busy={busy} onClick={go} disabled={!wh}><RefreshCcw className="size-4" />Create cycle count now</Button>
+      </div>
+      {res && <Notice tone={res.tone} className="mt-3">{res.text}</Notice>}
     </Panel>
   );
 }

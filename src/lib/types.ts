@@ -1,13 +1,13 @@
 export type Uuid = string;
 
 export type WarehouseCtx = {
-  id: Uuid; code: string; name: string; branch_code: string; company_code: string; company_id: Uuid; perms: string[];
+  id: Uuid; code: string; name: string; branch_code: string; company_code: string; company_id: Uuid; perms: string[]; is_training?: boolean;
 };
 
 export type MyContext = {
   registered: boolean;
   active?: boolean;
-  user?: { id: Uuid; email: string; full_name: string; employee_number: string | null };
+  user?: { id: Uuid; email: string; full_name: string; employee_number: string | null; language?: string; text_size?: string };
   requires_mfa?: boolean;
   roles?: { role: string; name: string; scope_type: string; scope_id: Uuid | null; scope_label: string }[];
   permissions?: string[];

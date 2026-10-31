@@ -32,6 +32,10 @@ export default function DashboardPage() {
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState('');
 
+  // floor staff (no stock overview or reports) start on "My tasks"
+  const floorOnly = !can('stock.view') && !can('reports.view');
+  useEffect(() => { if (floorOnly) router.replace('/tasks'); }, [floorOnly, router]);
+
   useEffect(() => {
     callRpc<Dash>('dashboard_summary').then(({ data, error }) => { if (error) setErr(error.message); else setD(data); });
   }, []);

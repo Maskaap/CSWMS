@@ -32,6 +32,7 @@ function SetupInner() {
     <>
       <PageHeader title="Company & warehouse setup" description="Head office → company → branch → warehouse → storage area → shelf / bin. Add companies, provinces and locations at any time — no software change needed."
         actions={<>
+          {setup && <Link href="/setup/wizard"><Button variant="navy">Setup guide</Button></Link>}
           {prod && <Link href="/setup/products"><Button><Package className="size-4" />Products</Button></Link>}
           {(can('import.manage') || can('import.approve')) && <Link href="/setup/import"><Button variant="primary"><FileUp className="size-4" />Opening stock import</Button></Link>}
           <Link href="/setup/labels"><Button><Printer className="size-4" />Print labels</Button></Link>

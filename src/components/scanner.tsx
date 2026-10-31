@@ -10,8 +10,10 @@ import { Button, cx } from './ui';
  *  - manual typing.
  * Identical codes read by the camera within 1.5 s are ignored (prevents double reads).
  */
-export function ScanInput({ onScan, placeholder = 'Scan or type a barcode, SKU or location', autoFocus = true, disabled, label = 'Scan', big }: {
+export function ScanInput({ onScan, placeholder = 'Scan or type a barcode, SKU or location', autoFocus = true, disabled, label = 'Scan', big, continuous, cameraHint }: {
   onScan: (code: string) => void; placeholder?: string; autoFocus?: boolean; disabled?: boolean; label?: string; big?: boolean;
+  /** keep the camera open after each read (scan-to-count) */
+  continuous?: boolean; cameraHint?: string;
 }) {
   const [value, setValue] = useState('');
   const [camera, setCamera] = useState(false);
@@ -50,13 +52,15 @@ export function ScanInput({ onScan, placeholder = 'Scan or type a barcode, SKU o
           <Camera className="size-5" /><span className="hidden sm:inline">Camera</span>
         </Button>
       </div>
-      {camera && <CameraScanner onClose={() => setCamera(false)} onResult={(c) => { setCamera(false); submit(c); }} />}
+      {camera && <CameraScanner hint={cameraHint} onClose={() => setCamera(false)} onResult={(c) => { if (!continuous) setCamera(false); submit(c); }} />}
     </div>
   );
 }
 
-function CameraScanner({ onResult, onClose }: { onResult: (code: string) => void; onClose: () => void }) {
+function CameraScanner({ onResult, onClose, hint }: { onResult: (code: string) => void; onClose: () => void; hint?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const resultRef = useRef(onResult);
+  resultRef.current = onResult;
   const [error, setError] = useState<string | null>(null);
   const last = useRef<{ code: string; at: number }>({ code: '', at: 0 });
 
@@ -78,7 +82,7 @@ function CameraScanner({ onResult, onClose }: { onResult: (code: string) => void
             if (code === last.current.code && now - last.current.at < 1500) return;
             last.current = { code, at: now };
             if (navigator.vibrate) navigator.vibrate(60);
-            onResult(code);
+            resultRef.current(code);
           },
         );
       } catch (e) {
@@ -88,12 +92,12 @@ function CameraScanner({ onResult, onClose }: { onResult: (code: string) => void
       }
     })();
     return () => { cancelled = true; controls?.stop(); };
-  }, [onResult]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-navy-950/95 p-4" role="dialog" aria-label="Camera scanner">
       <div className="mb-3 flex items-center justify-between text-white">
-        <span className="font-medium">Point the camera at the barcode or QR code</span>
+        <span className="font-medium">{hint ?? 'Point the camera at the barcode or QR code'}</span>
         <Button variant="secondary" size="sm" onClick={onClose}><X className="size-4" />Close</Button>
       </div>
       <div className="relative mx-auto w-full max-w-lg flex-1 overflow-hidden rounded-lg border-2 border-signal-400">

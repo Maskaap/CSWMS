@@ -78,19 +78,46 @@ For warehouse staff, stock controllers, counters and supervisors. Keep this guid
 
 **Returns & Corrections → Damaged / quarantine.** Moves stock between *available*, *damaged* and *quarantine*. Total stock is unchanged; only available stock can be issued.
 
-## Monthly stocktake — counting
+## My tasks — start here
 
-1. **Monthly Stocktake → My counting tasks** → open the stocktake.
-2. **1. Location:** scan the shelf/bin label (or choose it).
-3. **2. Item:** scan each product on that location.
-4. **3. Quantity:** count and enter the quantity, **Record count**.
-   * Each entry is **added** to that item's total for the location — count each pallet/box separately if you like.
-   * If an item is **not there**, enter **0** — this is different from "not counted".
-   * Items that the system did not expect at that location are recorded as *unexpected* — that's fine, count them.
-5. Made a mistake? In *My recent entries* press **void** and give the reason, then count again.
-6. Lines marked **RECOUNT** must be counted again from scratch.
+**Today** (first button on the bottom bar) shows everything waiting for you: counts to do (with progress), tools you are holding and when they are due back, transfers to receive, approvals and messages, and anything you can still **undo**. Counters open straight into this screen.
 
-In a **blind count** you will not see the expected quantities — count what is physically there.
+## Counting — the guided count (recommended)
+
+1. **Today → Start counting** (or open the stocktake → **Guided count — bin by bin**).
+2. The screen shows **one bin at a time**, in the walking order set up for your warehouse. Scan the **bin label** to jump to a bin, or use the arrows.
+3. **Scan each item.** Every scan adds **1**. A box/carton barcode adds the whole box (e.g. 12). You hear a beep, the phone vibrates and the screen flashes:
+   * **green** — counted;
+   * **yellow** (two beeps) — this item was not expected in this bin; it is counted as an extra item, that is fine;
+   * **red** (low tone) — code not found. Scan again or type the product code.
+4. **Many of the same item?** Tap the item in the list (or scan it once), type the quantity and press **Add** — choose the unit (each / box) if there is more than one.
+5. **Bin is empty** records 0 for everything not yet counted in that bin. **Done with this bin** moves you to the next one.
+6. A wrong scan that has not been sent yet can be removed with the bin icon in *waiting to send*. Once sent, ask your supervisor (or use void in the classic count screen).
+7. When every bin is done you see **All bins done — thank you!** Tell your supervisor.
+
+**No signal? Keep counting.** Counts are kept on the phone and sent automatically when the signal returns (the chip at the top shows how many are waiting). Each count is sent once, even if the phone resends it. Open the count from **Today** once while you still have signal — it then shows *Ready to count without signal*. Counts older than 72 hours can no longer be sent; anything that could not be sent is shown in red — tell your supervisor the item and quantity.
+
+Only **counting** works offline. Receiving, issuing, transfers and corrections always need a connection.
+
+**Classic count screen** (still available under the stocktake): choose the location, scan the item, type the quantity, **Record count**. Each entry is **added** to the item's total for that location. Enter **0** if the item is not there. Lines marked **RECOUNT** must be counted again from scratch. In a **blind count** you do not see the expected quantities.
+
+**Cycle counts.** Instead of one big count a month, your warehouse may count a few items every working day (about 10 minutes). They appear in **Today** as *Cycle count* and only lead you to the bins where those items are.
+
+## Oops — undo your own mistake (within 10 minutes)
+
+Straight after a receipt, withdrawal, return, move or status change you see **Undo** with a countdown. Press it, say what was wrong (e.g. *wrong item scanned*) and press **Undo**. The stock goes back exactly as it was. The undo is recorded under your name with your reason — it is not hidden.
+
+* Only your **own** transactions, only within the time shown (normally 10 minutes), and only once.
+* Receipts against a purchase order, adjustments, transfers and stocktakes cannot be undone this way — ask your supervisor.
+* Recent transactions you can still undo are also listed on **Today**.
+
+## Photos
+
+On a transaction (e.g. damaged stock), a tool, or a stocktake you can press **Add photo**. The phone camera opens; the photo is made smaller automatically and stored privately. Photos cannot be deleted (they are evidence) — add a corrected one if needed.
+
+## Language, text size and sound
+
+**My settings** (menu → your name): choose **English, Afrikaans, isiZulu or isiXhosa** for the floor screens (Today, counting, undo, bottom bar), **large text**, the scan **sound** on this phone, and **WhatsApp alerts** if your role receives alerts.
 
 ## Look up an item or shelf
 
@@ -101,7 +128,7 @@ In a **blind count** you will not see the expected quantities — count what is 
 | Message | What to do |
 |---|---|
 | **NOT CONFIRMED — check before re-entering** | Press **Retry safely**. If it keeps failing, write down what you were doing and tell your supervisor. Do not re-enter it. |
-| **No internet connection** (red bar) | Wait for the connection to return. Nothing is saved offline. |
+| **Offline** (red bar) | Receiving, issuing and other transactions wait for the connection — nothing is saved offline. **Counting continues** and sends itself later. |
 | **Not enough stock — nothing was saved** | Check the location and item. Tell your supervisor if the shelf has stock the system doesn't show. |
 | **Not permitted** | You do not have rights for this warehouse/action. Check *Working in*, or ask your manager. |
 | **No product or location found** | The label is not registered. Search by description; tell your supervisor to add the barcode. |

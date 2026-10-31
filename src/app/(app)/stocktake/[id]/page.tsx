@@ -6,6 +6,7 @@ import { MapPin, Play, Send, Square, Undo2, UserPlus } from 'lucide-react';
 import { useApp } from '@/components/app-context';
 import { ProductPicker } from '@/components/product-picker';
 import { TxnOutcome } from '@/components/txn-outcome';
+import { Photos } from '@/components/photos';
 import { Badge, Button, Field, Input, Notice, OfflineNotice, PageHeader, Panel, Select, Spinner, StatusBadge, Table, Td, Th, cx } from '@/components/ui';
 import { ActionResult, ExportButtons, KV, LoadError, Tabs, useConfirm } from '@/components/widgets';
 import { useAction } from '@/hooks/use-action';
@@ -86,6 +87,7 @@ export default function StocktakeDetailPage() {
       {tab === 'count' && <CountPanel st={s} sheet={sheet.rows} onCounted={() => { sheet.reload(); if (manager) lines.reload(); head.reload(); }} counting={counting} />}
       {tab === 'review' && manager && <ReviewPanel st={s} lines={lines.rows} loading={lines.loading} reload={reload} />}
       {tab === 'team' && manager && <TeamPanel st={s} assignees={assignees.rows} reload={assignees.reload} myId={me?.user?.id} />}
+      <div className="mt-6"><Photos entityType="stocktake" entityId={s.id} title="Photos (damaged stock, empty bins, labels)" canAdd={s.status !== 'finalised' && s.status !== 'cancelled'} /></div>
     </>
   );
 }
@@ -117,6 +119,12 @@ function CountPanel({ st, sheet, onCounted, counting }: { st: Record<string, any
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_24rem]">
       <div className="space-y-4">
+        <Link href={`/stocktake/${st.id}/count`} className="flex items-center justify-between gap-3 rounded-lg border-2 border-navy-900 bg-signal-400 px-5 py-4 text-navy-950 hover:bg-signal-500">
+          <span><span className="block text-lg font-semibold">Guided count — bin by bin</span>
+            <span className="block text-sm">Scan to count (+1 per scan), &quot;bin empty&quot;, sound &amp; flash — keeps working without signal.</span></span>
+          <Play className="size-6 shrink-0" />
+        </Link>
+        <p className="text-xs text-steel-600">Or record counts one by one below.</p>
         {recountOnly && <Notice tone="warn" title="Recount only">Only lines marked for recount can be counted now.</Notice>}
         <Panel title={<span className="flex items-center gap-2"><MapPin className="size-4" />1. Location being counted</span>}>
           <Select value={locId} onChange={(e) => setLocId(e.target.value)} className="h-12">
