@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, Bell, BookmarkCheck, Boxes, Building2, ShoppingCart, Wrench, ClipboardCheck, FileBarChart, LayoutDashboard, TrendingUp,
-  ListTodo, LogOut, Menu, RotateCcw, ScanLine, Settings, ShieldCheck, Stamp, UserCog, Users, WifiOff, X,
+  Handshake, ListTodo, LogOut, Menu, RotateCcw, ScanLine, Settings, ShieldCheck, Stamp, UserCog, Users, WifiOff, X,
 } from 'lucide-react';
 import type { Key } from '@/lib/i18n';
 import { supabaseBrowser } from '@/lib/supabase/client';
@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { href: '/withdraw', label: 'Withdraw Stock', icon: ArrowUpFromLine, show: (c) => c('stock.withdraw') },
   { href: '/transfers', label: 'Transfer Stock', icon: ArrowLeftRight, show: (c) => c('stock.transfer.dispatch') || c('stock.transfer.receive') },
   { href: '/corrections', label: 'Returns & Corrections', icon: RotateCcw, show: (c) => c('stock.return') || c('stock.adjust') || c('stock.move') },
+  { href: '/intercompany', label: 'Inter-company', icon: Handshake, show: (c) => c('intercompany.order') || c('intercompany.approve') || c('invoice.view') },
   { href: '/purchasing', label: 'Purchasing', icon: ShoppingCart, show: (c) => c('purchase.manage') || c('purchase.approve') },
   { href: '/assets', label: 'Tools & Equipment', icon: Wrench, show: (c) => c('asset.checkout') || c('asset.manage') },
   { href: '/reservations', label: 'Reservations', icon: BookmarkCheck, show: (c) => c('stock.withdraw') },

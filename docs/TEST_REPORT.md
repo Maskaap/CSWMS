@@ -1,6 +1,6 @@
-# CSWMS — Test Report (Phases 1–4)
+# CSWMS — Test Report (Phases 1–5)
 
-Generated from the recorded test runs on **26/10/2026**, updated with the Phase 4 runs on **30/10/2026**. Both suites were run from a freshly created database. Re-run at any time — see *How to re-run* at the end.
+Generated from the recorded test runs on **26/10/2026**, updated with the Phase 4 runs on **30/10/2026** and the Phase 5 runs on **31/10/2026**. Both suites were run from a freshly created database. Re-run at any time — see *How to re-run* at the end.
 
 ## Summary
 
@@ -10,9 +10,10 @@ Generated from the recorded test runs on **26/10/2026**, updated with the Phase 
 | Database — Phase 2 (`tests/db/run-phase2-tests.mjs`) | Purchasing, multi-level approvals, tools & equipment, reservations, notification preferences, digests, scheduled housekeeping — on its own fresh database | **27** | 0 |
 | Database — Phase 3 (`tests/db/run-phase3-tests.mjs`) | Analytics and predictive management on 14 months of history (85 real transactions, posted then backdated with hashes recomputed); every expected answer computed independently | **15** | 0 |
 | Database — Phase 4 (`tests/db/run-phase4-tests.mjs`) | Offline counting, scan-to-count, empty bins, cycle counts, My tasks, quick undo, photos, personal settings, WhatsApp outbox, training warehouse, bin generator, accounting journal, weekly summary, security | **19** | 0 |
-| End-to-end (`tests/e2e`) | Production build of the app in a real browser (Chromium), real PostgREST on the test database, eight roles, every screen (Phases 1–4), complete workflows including offline counting | **140** | 0 |
+| Database — Phase 5 (`tests/db/run-phase5-tests.mjs`) | Inter-company orders, approval, dispatch from the seller's stock, automatic orders and tax invoices on receipt, credit notes, payments, immutability, visibility, accounting export | **12** | 0 |
+| End-to-end (`tests/e2e`) | Production build of the app in a real browser (Chromium), real PostgREST on the test database, eight roles, every screen (Phases 1–5), complete workflows including offline counting and an inter-company order to paid invoice | **144** | 0 |
 
-**Result: all automated tests pass (269 / 269).** The Phase 1–3 suites were re-run after the Phase 4 migrations: no regressions. Items that cannot be proven in an automated sandbox are listed under *Outstanding — verify on staging* and must be signed off before go-live.
+**Result: all automated tests pass (285 / 285).** The Phase 1–4 suites were re-run after the Phase 5 migrations: no regressions. Items that cannot be proven in an automated sandbox are listed under *Outstanding — verify on staging* and must be signed off before go-live.
 
 ## 1. Database suite — passed
 
@@ -217,6 +218,24 @@ All eight analytics tabs plus a job-costing page opened without errors by the Su
 - ✅ Setup guide creates 6 bins in snake order; accounting export downloads a balanced Xero CSV
 - ✅ New screens (/tasks, /me, /setup/wizard, /reports/accounting) open without errors for admin, counter and stock controller
 
+## 2g. Phase 5 — database suite (12 passed)
+
+- ✅ Buyer orders from another company (retry-safe); same-company orders refused; prices default to weighted-average cost + mark-up; seller's approvers notified
+- ✅ Only the selling side approves, never the requester; agreed prices kept; buyer notified; decided orders cannot be decided again
+- ✅ Dispatch picks the seller's own stock, fullest bin first, split over bins; transfer marked for the buyer; no duplicate automatic order; dispatched orders cannot be cancelled
+- ✅ Not enough stock: nothing moves, clear shortage message; order cancelled
+- ✅ Receipt issues a tax invoice (15 % VAT, seller VAT number and buyer address copied in, due in 30 days) for good + damaged at the agreed price; second receipt → second invoice; order completed; buyer owns exactly what it was invoiced for
+- ✅ Direct transfer between companies → automatic order; written-off shortage not invoiced; transfers inside one company create no documents
+- ✅ Invoices cannot be changed or deleted, even by the database owner; no direct table access
+- ✅ Partial and full credit notes, over-credit refused, payment by the seller only, valid dates only
+- ✅ Each side sees only its own documents; prices hidden without price access; anonymous refused
+- ✅ Accounting export: seller sales = buyer purchases = invoices less credit notes
+- ✅ Integrity check stays clean after inter-company trading
+
+## 2h. Phase 5 — end-to-end addition
+
+- ✅ Company manager CSA orders 2 rolls from CSB → super admin approves → CSB stock controller dispatches → CSA stock controller receives → tax invoice ICI-… with 15 % VAT appears on the transfer → PDF downloads → payment recorded; the CPT-MAIN balance check includes the 2 rolls
+
 ## 3. Mapping to the brief's testing requirements (section 18)
 
 | Requirement | Status | Where |
@@ -267,6 +286,7 @@ These depend on hosted services or physical devices that are not available in an
 | 17 | WhatsApp delivery | After Meta approves the `cswms_alert` template, opt in under *My settings*, trigger a low-stock alert, call */api/cron* |
 | 18 | Afrikaans, isiZulu and isiXhosa wording | A first-language speaker reads Today, the count screen and the undo dialog in each language |
 | 19 | First Xero / Sage import | Import one month's journal into a test company file with your accountant; confirm account codes |
+| 20 | Tax-invoice wording and layout with your accountant | Print an inter-company invoice and credit note; confirm SARS tax-invoice requirements are met for your companies |
 | 9 | Performance with your real data volumes | Import the real opening stock into staging; time the integrity check (*Check runs* shows duration) |
 
 ## 5. Defects found and fixed during this testing round
@@ -293,6 +313,7 @@ tests/db/reset.sh && (cd tests/db && npm ci && node run-tests.mjs)
 (cd tests/db && node run-phase2-tests.mjs)      # Phase 2, creates its own fresh database
 (cd tests/db && node run-phase3-tests.mjs)      # Phase 3 analytics on backdated history, own fresh database
 (cd tests/db && node run-phase4-tests.mjs)      # Phase 4 floor experience, own fresh database
+(cd tests/db && node run-phase5-tests.mjs)      # Phase 5 inter-company orders and invoices, own fresh database
 
 # full end-to-end run on a fresh database (needs a PostgREST binary and Playwright + Chromium)
 POSTGREST_BIN=/path/to/postgrest tests/e2e/run-e2e.sh

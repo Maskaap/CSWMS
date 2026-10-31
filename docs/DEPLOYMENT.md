@@ -138,3 +138,11 @@ Apply `20261027001000_phase3_analytics.sql` then `20261027009000_phase3_security
 4. Check: **My tasks** opens; *My settings* saves a language; on a test warehouse do a withdrawal and press **Undo**; *Setup guide* opens; run an integrity check — it must stay GREEN.
 5. Optional: WhatsApp (§ 4a), external cron (§ 4b), `cycle.items_per_day`, accounting account codes.
 6. API note: `record_count` has three new optional arguments (`p_counted_at`, `p_offline`, `p_method`); existing calls keep working.
+
+## Upgrading to Phase 5 (inter-company orders and invoices)
+
+1. Phase 4 must be installed. Take a backup; the integrity status should be GREEN.
+2. Supabase → *SQL Editor* → run `supabase/install/cswms_phase5_upgrade.sql` once (two migrations, `20261101001000` and `009000`, in one transaction). It adds tables, permissions and functions; no stock is changed.
+3. Upload the changed files and let Vercel redeploy.
+4. Fill in each company's legal name, address and VAT number (*Company & Warehouse Setup → Companies*), and the accounting codes for inter-company sales and purchases.
+5. Check: *Inter-company* opens; create a test order between two companies, approve it as another person, dispatch, receive — an invoice appears on the transfer.

@@ -1,0 +1,89 @@
+{
+  "at": "2026-10-31T06:29:53.401Z",
+  "results": [
+    {
+      "area": "Orders",
+      "name": "The buying company orders stock from the selling company; prices default to cost + 10 % mark-up; the seller is told",
+      "status": "PASS",
+      "ms": 43,
+      "detail": ""
+    },
+    {
+      "area": "Orders",
+      "name": "Only the selling side approves (not the requester); prices can be agreed on approval; buyer is told",
+      "status": "PASS",
+      "ms": 49,
+      "detail": ""
+    },
+    {
+      "area": "Dispatch",
+      "name": "The seller dispatches the order: stock is picked from the seller's bins (split over bins) into a transfer owned by the buyer on arrival",
+      "status": "PASS",
+      "ms": 26,
+      "detail": ""
+    },
+    {
+      "area": "Dispatch",
+      "name": "An order larger than the seller's stock cannot be dispatched (nothing moves)",
+      "status": "PASS",
+      "ms": 19,
+      "detail": ""
+    },
+    {
+      "area": "Invoices",
+      "name": "Receiving issues a tax invoice from seller to buyer for what arrived, at the agreed prices, with 15 % VAT",
+      "status": "PASS",
+      "ms": 28,
+      "detail": ""
+    },
+    {
+      "area": "Invoices",
+      "name": "The rest arrives: a second invoice; the order is completed; owners changed exactly by what was invoiced",
+      "status": "PASS",
+      "ms": 10,
+      "detail": ""
+    },
+    {
+      "area": "Invoices",
+      "name": "A transfer between companies without an order gets an automatic order; a written-off shortage is not invoiced",
+      "status": "PASS",
+      "ms": 37,
+      "detail": ""
+    },
+    {
+      "area": "Invoices",
+      "name": "An issued invoice can never be changed or deleted, even by the database owner",
+      "status": "PASS",
+      "ms": 15,
+      "detail": ""
+    },
+    {
+      "area": "Credit & payment",
+      "name": "Seller issues a partial credit note (damaged drum), then records payment; buyer cannot",
+      "status": "PASS",
+      "ms": 58,
+      "detail": ""
+    },
+    {
+      "area": "Visibility",
+      "name": "Each side sees its own documents; others see nothing; anonymous callers are refused",
+      "status": "PASS",
+      "ms": 142,
+      "detail": ""
+    },
+    {
+      "area": "Accounting",
+      "name": "Invoice export: seller sees sales lines, buyer purchase lines, credit notes negative; totals agree",
+      "status": "PASS",
+      "ms": 10,
+      "detail": ""
+    },
+    {
+      "area": "Integrity",
+      "name": "Stock integrity stays clean after inter-company trading; anonymous access sanity holds",
+      "status": "PASS",
+      "ms": 40,
+      "detail": ""
+    }
+  ]
+}

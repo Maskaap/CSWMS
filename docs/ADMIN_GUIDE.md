@@ -154,6 +154,27 @@ Every tab exports to Excel, CSV and PDF; the same analyses are also under *Repor
 
 **Accounting export.** *Reports → Accounting export (Xero / Sage)*: choose the company and period; CSWMS prepares a balanced daily journal at weighted-average cost (stock received, issued net of returns, moved between companies, adjustments/variances, opening balances) and downloads it as a Xero manual-journal CSV, a Sage journal CSV or Excel. Set the account codes in *Settings → accounting* with your accountant before the first import.
 
+## 8c. Inter-company orders and invoices (Phase 5)
+
+When stock moves from one company of the group to another, CSWMS keeps the paperwork: an **order** (ICO-…), the **transfer** (TRF-…) and the selling company's **invoice** (ICI-…), with **credit notes** (ICC-…) when needed. Menu: **Inter-company**.
+
+1. **Order** — someone with *intercompany.order* at the receiving warehouse chooses *New order*, the supplying warehouse of the other company and the items. The supplying company's approvers are told.
+2. **Approve** — someone with *intercompany.approve* at the supplying warehouse (not the person who ordered) approves or rejects it. With price access they can agree a price per line; otherwise the price is the weighted-average cost plus `intercompany.markup_pct`.
+3. **Dispatch** — a stock controller of the supplying warehouse presses *Create transfer and dispatch*. CSWMS takes the stock from the selling company's own stock at that warehouse, fullest bins first. Ownership passes to the buyer when it is received.
+4. **Invoice** — every receipt issues an invoice from seller to buyer for what arrived (good and damaged in transit) at the order price. Stock written off as lost in transit is not invoiced (the seller carries that loss). VAT is added at `intercompany.vat_rate` (15 %) when the selling company has a VAT number; due date = invoice date + `intercompany.payment_days` (30).
+5. **Payment and credit** — people with *invoice.manage* for the selling company mark invoices as paid and issue credit notes (per line or in full). Issued invoices and credit notes can never be edited or deleted.
+
+A transfer created directly with *Change legal ownership on receipt* gets an order recorded automatically at dispatch and is invoiced the same way.
+
+**Before the first invoice:** fill in each company's registered name, address, VAT and registration numbers under *Company & Warehouse Setup → Companies* — they are printed on the tax invoice and copied into it at issue. Set `accounting.ic_sales_account`, `accounting.ic_purchases_account` and the tax types with your accountant; *Reports → Accounting export* then downloads each company's inter-company sales and purchases for Xero or Sage.
+
+| Permission | Given to | Allows |
+|---|---|---|
+| intercompany.order | Super admin, company manager, branch manager, warehouse supervisor | Order from another company |
+| intercompany.approve | Super admin, head office, company manager, branch manager | Approve / reject, agree prices |
+| invoice.view | Super admin, head office, company and branch managers, auditor | See invoices of their companies |
+| invoice.manage | Super admin, head office, company manager | Record payments, credit notes |
+
 ## 9. System administration
 
 * **Settings** — all business rules (thresholds, working hours, integrity run time and stale limit, transfer transit days, e-mail alerts, approval reminder/escalation hours, PO over-receipt tolerance and overdue grace days, default tool loan days, digest time). Changes are audited.

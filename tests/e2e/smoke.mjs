@@ -39,6 +39,8 @@ const PAGES = [
   ...ANALYTICS, '/analytics/job?ref=JOB-REPEAT',
   // Phase 4
   '/tasks', '/me', '/setup/wizard', '/reports/accounting',
+  // Phase 5
+  '/intercompany', '/intercompany?tab=invoices', '/intercompany/new',
 ];
 const USERS = [
   { email: 'admin@cswms.test', pages: PAGES },
@@ -525,6 +527,70 @@ await p4('accounting export: Xero CSV for CSA balances', 'admin@cswms.test', asy
   return `${lines.length} lines, balanced`;
 }, { mobile: false, downloads: true });
 
+// ---------------------------------------------------------------- Phase 5: inter-company order → approve → dispatch → receive → invoice → paid
+let icQty = 0;
+{
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, acceptDownloads: true });
+  const page = await ctx.newPage();
+  const errs = []; watch(page, errs);
+  const switchUser = async (email) => { await page.context().clearCookies(); await page.evaluate(() => localStorage.clear()); await login(page, email); };
+  try {
+    await su0(`update companies set vat_number='4000000001', legal_name='CS Beta (Pty) Ltd', address='9 Harbour St, Gqeberha' where code='CSB'`);
+    await login(page, 'mgra@cswms.test');
+    await page.goto(BASE + '/intercompany/new'); await settle(page);
+    const deliver = page.locator('label', { hasText: 'Deliver to' }).locator('select');
+    await deliver.selectOption({ label: (await deliver.locator('option', { hasText: 'CPT-MAIN' }).first().textContent()).trim() });
+    const from = page.locator('label', { hasText: 'Supplied from' }).locator('select');
+    await from.selectOption({ label: (await from.locator('option', { hasText: 'PE-MAIN' }).first().textContent()).trim() });
+    const scan = page.getByRole('textbox', { name: 'Scan product' });
+    await scan.fill('TAPE-48'); await scan.press('Enter');
+    await page.getByLabel('Quantity of TAPE-48').fill('2');
+    await page.getByRole('button', { name: 'Send order' }).click();
+    await page.waitForURL(/\/intercompany\/orders\/[0-9a-f-]{36}$/, { timeout: 15000 });
+    const orderUrl = page.url();
+    await page.getByText(/submitted/).first().waitFor();
+
+    await switchUser('admin@cswms.test');
+    await page.goto(orderUrl); await settle(page);
+    await page.getByRole('button', { name: 'Approve' }).click(); await confirmIn(page);
+    await page.getByText('Order approved.').waitFor({ timeout: 15000 });
+
+    await switchUser('ctrlb@cswms.test');
+    await page.goto(orderUrl); await settle(page);
+    await page.getByRole('button', { name: 'Create transfer and dispatch' }).click();
+    await page.getByText(/Dispatched as/).waitFor({ timeout: 15000 });
+    const trfHref = await page.locator('a', { hasText: /^TRF-/ }).first().getAttribute('href');
+
+    await switchUser('ctrl1@cswms.test');
+    await page.goto(BASE + trfHref); await settle(page);
+    await page.getByRole('button', { name: 'all' }).first().click();
+    await page.getByRole('button', { name: 'Confirm receipt' }).click();
+    await page.getByText(/Receipt confirmed/).waitFor({ timeout: 15000 });
+    icQty = 2;
+    await page.getByText('Inter-company documents').waitFor({ timeout: 15000 });
+
+    await switchUser('admin@cswms.test');
+    await page.goto(BASE + trfHref); await settle(page);
+    await page.locator('a', { hasText: /^ICI-/ }).first().click();
+    await page.waitForURL(/\/intercompany\/invoices\//); await settle(page);
+    await page.getByText(/TAX INVOICE/).first().waitFor();
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), page.getByRole('button', { name: 'PDF' }).click()]);
+    const head = fs.readFileSync(await dl.path()).subarray(0, 4).toString('latin1');
+    if (head !== '%PDF') throw new Error('invoice PDF not a PDF');
+    await page.getByPlaceholder('e.g. EFT 12345').fill('EFT E2E-1');
+    await page.getByRole('button', { name: 'Mark as paid' }).click();
+    await page.getByText('Payment recorded.').waitFor({ timeout: 15000 });
+    const inv = await one(`select i.status, i.total, i.vat_rate, s.code seller, b.code buyer from ic_invoices i join companies s on s.id=i.seller_company_id join companies b on b.id=i.buyer_company_id order by i.created_at desc limit 1`);
+    if (inv.status !== 'paid' || inv.seller !== 'CSB' || inv.buyer !== 'CSA' || Number(inv.vat_rate) !== 15) throw new Error('invoice ' + JSON.stringify(inv));
+    results.push({ user: 'phase5', page: `inter-company: order (CSA) → approve → dispatch (CSB) → receive → tax invoice ${dl.suggestedFilename()} R ${inv.total} → paid`, ok: errs.length === 0, errors: errs });
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/p5_invoice.png`, fullPage: true });
+  } catch (e) {
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/p5_FAILED.png`, fullPage: true }).catch(() => {});
+    results.push({ user: 'phase5', page: 'inter-company order → invoice flow', ok: false, errors: [String(e).slice(0, 500), ...errs] });
+  }
+  await ctx.close();
+}
+
 // report downloads (Excel + PDF) as head office
 {
   const ctx = await browser.newContext({ acceptDownloads: true });
@@ -545,8 +611,8 @@ await p4('accounting export: Xero CSV for CSA balances', 'admin@cswms.test', asy
 }
 
 const after = Number((await one(`select coalesce(sum(qty),0) q from stock_balances b join products p on p.id=b.product_id join warehouses w on w.id=b.warehouse_id where p.sku='TAPE-48' and w.code='CPT-MAIN' and b.status='available'`)).q);
-const expected = before + 8;
-results.push({ user: 'db', page: `CPT-MAIN TAPE-48 balance: ${before} − 1 withdrawn + 2 received − 1 transferred + 10 received on PO − 2 issued to reservation = ${after}`, ok: after === expected, errors: after === expected ? [] : [`expected ${expected}`] });
+const expected = before + 8 + icQty;
+results.push({ user: 'db', page: `CPT-MAIN TAPE-48 balance: ${before} − 1 withdrawn + 2 received − 1 transferred + 10 received on PO − 2 issued to reservation + ${icQty} bought from CSB = ${after}`, ok: after === expected, errors: after === expected ? [] : [`expected ${expected}`] });
 
 await browser.close();
 await db.end();

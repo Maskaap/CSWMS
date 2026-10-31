@@ -106,8 +106,8 @@ export function Badge({ tone = 'idle', children, className }: { tone?: Tone; chi
 }
 
 export function statusTone(s: string): Tone {
-  if (['posted', 'approved', 'finalised', 'received', 'completed', 'passed', 'resolved', 'active', 'GREEN', 'ok', 'sent'].includes(s)) return 'ok';
-  if (['pending', 'pending_approval', 'partially_received', 'dispatched', 'counting', 'review', 'investigating', 'warnings', 'warning', 'low', 'AMBER', 'acknowledged', 'scheduled', 'draft'].includes(s)) return 'warn';
+  if (['posted', 'approved', 'finalised', 'received', 'completed', 'passed', 'resolved', 'active', 'GREEN', 'ok', 'sent', 'paid'].includes(s)) return 'ok';
+  if (['pending', 'pending_approval', 'partially_received', 'dispatched', 'counting', 'review', 'investigating', 'warnings', 'warning', 'low', 'AMBER', 'acknowledged', 'scheduled', 'draft', 'submitted', 'in_transit', 'issued', 'partly_credited', 'overdue'].includes(s)) return 'warn';
   if (['rejected', 'failed', 'critical', 'discrepancies', 'out', 'RED', 'open', 'closed_with_discrepancy'].includes(s)) return 'bad';
   return 'idle';
 }

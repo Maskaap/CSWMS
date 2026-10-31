@@ -22,7 +22,7 @@ export default function AccountingExportPage() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (!can('cost.view') || !can('reports.view')) return <Notice tone="bad">The accounting export needs permission to run reports and view prices.</Notice>;
+  if ((!can('cost.view') || !can('reports.view')) && !can('invoice.view')) return <Notice tone="bad">The accounting export needs permission to run reports and view prices.</Notice>;
   const co = companies.find((c) => c.id === company);
   const run = async () => {
     setBusy(true); setErr(null);
@@ -84,9 +84,62 @@ export default function AccountingExportPage() {
           </Table>
         </Panel>
       )}
+      {can('invoice.view') && <IcInvoiceExport company={company} from={from} to={to} companyCode={co?.code ?? ''} />}
       <p className="mt-4 text-xs text-steel-600">How it works: every day&apos;s movements are grouped (received, issued net of returns, between companies, adjustments and stocktake variances, opening balances).
         Each group debits or credits the stock-on-hand account against its own account, valued at the weighted-average purchase cost. Items without a purchase price are valued at R0.
         Check the account codes with your accountant before the first import. In Xero use <i>Accounting → Manual journals → Import</i>; in Sage use the journal import (map the columns if your edition asks).</p>
     </>
+  );
+}
+
+type IcRow = { side: 'sales' | 'purchases'; contact: string; invoice_no: string; kind: string; reference: string; issue_date: string; due_date: string;
+  description: string; qty: number; unit_price: number; line_total: number; vat_rate: number; account: string; tax_type: string };
+
+/** Inter-company invoices and credit notes of one company, as Xero sales invoices / bills or a Sage import */
+function IcInvoiceExport({ company, from, to, companyCode }: { company: string; from: string; to: string; companyCode: string }) {
+  const [rows, setRows] = useState<IcRow[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = async () => {
+    setBusy(true); setErr(null);
+    const { data, error } = await callRpc<IcRow[]>('ic_invoice_export', { p_company: company || null, p_from: from, p_to: to });
+    setBusy(false);
+    if (error) { setErr(error.message); setRows(null); return; }
+    setRows((data ?? []).map((r) => ({ ...r, qty: Number(r.qty), unit_price: Number(r.unit_price), line_total: Number(r.line_total) })));
+  };
+  const xero: Col<IcRow>[] = [
+    { key: 'contact', label: '*ContactName' }, { key: 'invoice_no', label: '*InvoiceNumber' }, { key: 'reference', label: 'Reference' },
+    { key: 'd', label: '*InvoiceDate', get: (r) => ddmmyyyy(r.issue_date) }, { key: 'due', label: '*DueDate', get: (r) => ddmmyyyy(r.due_date) },
+    { key: 'description', label: '*Description' }, { key: 'qty', label: '*Quantity' }, { key: 'unit_price', label: '*UnitAmount', get: (r) => r.unit_price.toFixed(4) },
+    { key: 'account', label: '*AccountCode' }, { key: 'tax_type', label: '*TaxType' },
+  ];
+  const sage = (side: 'sales' | 'purchases'): Col<IcRow>[] => [
+    { key: 'd', label: 'Date', get: (r) => ddmmyyyy(r.issue_date) }, { key: 'invoice_no', label: 'Document No' }, { key: 'kind', label: 'Type', get: (r) => (r.kind === 'credit_note' ? 'Credit Note' : 'Invoice') },
+    { key: 'contact', label: side === 'sales' ? 'Customer' : 'Supplier' }, { key: 'description', label: 'Description' }, { key: 'qty', label: 'Quantity' },
+    { key: 'unit_price', label: 'Unit Price Excl', get: (r) => r.unit_price.toFixed(4) }, { key: 'vat_rate', label: 'VAT %' },
+    { key: 'line_total', label: 'Amount Excl', get: (r) => r.line_total.toFixed(2) }, { key: 'account', label: 'Account' },
+  ];
+  const sales = rows?.filter((r) => r.side === 'sales') ?? []; const purchases = rows?.filter((r) => r.side === 'purchases') ?? [];
+  const sum = (a: IcRow[]) => a.reduce((s, r) => s + r.line_total, 0);
+  return (
+    <Panel className="mt-6" title="Inter-company invoices (sales and purchases between group companies)"
+      actions={<Button size="sm" variant="navy" busy={busy} disabled={!company} onClick={load}>Prepare</Button>}>
+      <p className="text-sm text-steel-600">For the company and period above. Sales invoices import into Xero under <i>Sales → Import</i>, purchases under <i>Bills to pay → Import</i>; credit notes have negative quantities. Accounts and tax types: Settings → accounting.</p>
+      {err && <Notice tone="bad" className="mt-3">{err}</Notice>}
+      {rows && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {([['Sales (we supplied)', sales, 'Xero sales invoices', 'sales'], ['Purchases (we received)', purchases, 'Xero bills', 'purchases']] as const).map(([label, list, xname, side]) => (
+            <div key={label} className="rounded-md border border-steel-200 p-3">
+              <div className="font-semibold text-navy-900">{label}</div>
+              <div className="text-sm text-steel-600">{list.length} lines · {fmtZAR(sum(list))} excl. VAT</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button size="sm" disabled={!list.length} onClick={() => exportCSV(`${xname} ${companyCode} ${from} to ${to}`, xero, list)}><Download className="size-4" />{xname} CSV</Button>
+                <Button size="sm" disabled={!list.length} onClick={() => exportCSV(`Sage ${label.split(' ')[0]} ${companyCode} ${from} to ${to}`, sage(side), list)}><Download className="size-4" />Sage CSV</Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Panel>
   );
 }

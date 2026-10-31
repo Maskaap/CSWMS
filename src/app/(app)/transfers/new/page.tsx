@@ -114,6 +114,7 @@ export default function NewTransferPage() {
                 {companies.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
               </Select>
             </Field>
+            {ownerChange && <Notice tone="info">Ownership changes on receipt: an inter-company <b>order</b> is recorded when this is dispatched, and the selling company&apos;s <b>invoice</b> is issued automatically for what arrives. Tip: the buyer can also order through <a className="underline" href="/intercompany/new">Inter-company → New order</a>.</Notice>}
             <Field label="Expected arrival"><Input type="date" value={expected} onChange={(e) => setExpected(e.target.value)} disabled={locked} /></Field>
             <Field label="Reference"><Input value={reference} onChange={(e) => setReference(e.target.value)} disabled={locked} placeholder="Waybill / request no." /></Field>
             <Field label="Notes"><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} disabled={locked} rows={2} /></Field>

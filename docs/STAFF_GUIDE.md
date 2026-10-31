@@ -74,6 +74,10 @@ For warehouse staff, stock controllers, counters and supervisors. Keep this guid
 * **Receiving:** *Transfer Stock → Incoming*. Open the transfer, count what arrived, enter **good** and **damaged** quantities (or tap *all* if everything arrived in good condition), choose where it is put away, **Confirm receipt**.
 * If items are missing, receive what arrived; the rest stays outstanding. If it will never arrive, your supervisor requests a **shortage write-off** (needs management approval).
 
+## Stock for another company (inter-company)
+
+If another company of the group needs stock from your warehouse, it arrives as an **inter-company order** under **Inter-company**. Once your manager has approved it, open it and press **Create transfer and dispatch** — CSWMS picks your company's stock and creates the transfer. Receiving it at the other side works like any transfer. The invoice is made automatically; you do not need to do anything for it.
+
 ## Damaged or quarantined stock
 
 **Returns & Corrections → Damaged / quarantine.** Moves stock between *available*, *damaged* and *quarantine*. Total stock is unchanged; only available stock can be issued.

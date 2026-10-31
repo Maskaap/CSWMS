@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useApp } from '@/components/app-context';
@@ -8,9 +9,9 @@ import { ActionResult, KV, LoadError, TxnLink, useConfirm } from '@/components/w
 import { useAction } from '@/hooks/use-action';
 import { useLocations, useReasons } from '@/hooks/use-ref-data';
 import { useOnline } from '@/hooks/use-online';
-import { useRows } from '@/hooks/use-rows';
+import { useRows, useRpc } from '@/hooks/use-rows';
 import { useTransaction } from '@/hooks/use-transaction';
-import { fmtDateTime, fmtQty, parseQty } from '@/lib/format';
+import { fmtDateTime, fmtQty, fmtZAR, parseQty } from '@/lib/format';
 
 type T = Record<string, any>;
 type Line = { id: string; line_no: number; product_id: string; qty_dispatched: number; qty_received: number; qty_damaged: number; qty_written_off: number;
@@ -87,6 +88,7 @@ export default function TransferDetailPage() {
             ['Dispatch transaction', t.dispatch_txn_id ? <TxnLink id={t.dispatch_txn_id} no="view" /> : null],
           ]} />
         </Panel>
+        {t.to_owner_company_code && <IcDocs transferId={t.id} rev={`${t.status}|${lines.rows.map((l) => l.qty_received).join(',')}`} />}
 
         <Panel title="Lines" padded={false}>
           <Table className="rounded-none border-0">
@@ -146,5 +148,21 @@ export default function TransferDetailPage() {
         {!open && t.status !== 'draft' && <Notice tone={t.status === 'closed_with_discrepancy' ? 'warn' : 'ok'} title={t.status === 'closed_with_discrepancy' ? 'Closed with a discrepancy' : 'Transfer complete'} />}
       </div>
     </>
+  );
+}
+
+/** Inter-company order and invoices that belong to this transfer */
+function IcDocs({ transferId, rev }: { transferId: string; rev: string }) {
+  const { data } = useRpc<{ orders: { id: string; order_no: string; status: string; origin: string }[];
+    invoices: { id: string; invoice_no: string; kind: string; status: string; total: number; issue_date: string }[] }>('icd' + transferId + rev, 'ic_documents_for_transfer', { p_transfer_id: transferId });
+  if (!data || (!data.orders.length && !data.invoices.length)) return null;
+  return (
+    <Panel title="Inter-company documents">
+      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        {data.orders.map((o) => <span key={o.id}>Order <Link className="font-mono underline" href={`/intercompany/orders/${o.id}`}>{o.order_no}</Link> <StatusBadge status={o.status} /></span>)}
+        {data.invoices.map((i) => <span key={i.id}>{i.kind === 'credit_note' ? 'Credit note' : 'Invoice'} <Link className="font-mono underline" href={`/intercompany/invoices/${i.id}`}>{i.invoice_no}</Link> · {fmtZAR(i.total)} <StatusBadge status={i.status} /></span>)}
+      </div>
+      <p className="mt-2 text-xs text-steel-600">The selling company invoices what is received (good and damaged in transit). Stock written off as lost is not invoiced.</p>
+    </Panel>
   );
 }

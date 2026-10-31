@@ -85,6 +85,16 @@ A secure, web-based inventory system for a multi-company group operating across 
 | 40 | Photo evidence on transactions, tools and stocktakes (private storage, short-lived links) | ✅ Complete, tested in the database · upload path to verify on Supabase Storage |
 | 41 | Accounting journal export for Xero and Sage; weekly management summary e-mail | ✅ Complete, tested (journal balances) |
 
+## Feature status — Phase 5 (inter-company trading)
+
+| # | Feature | Status |
+|---|---|---|
+| 42 | Inter-company order: the buying company orders from another group company; seller approves (and may agree prices), then dispatches it as a transfer picked from its own stock | ✅ Complete, tested end to end |
+| 43 | Automatic order for any transfer that changes ownership between companies | ✅ Complete, tested |
+| 44 | Automatic (tax) invoice from seller to buyer for what is received — good and damaged in transit; written-off shortages are not invoiced; VAT 15 % when the seller has a VAT number; due date from the payment terms | ✅ Complete, tested end to end |
+| 45 | Credit notes (full or per line), payments, overdue tracking; issued invoices can never be changed or deleted | ✅ Complete, tested |
+| 46 | Order and tax-invoice / credit-note PDFs; Xero and Sage import files for inter-company sales and purchases | ✅ Complete, tested |
+
 ## Quick start (developers)
 
 ```bash

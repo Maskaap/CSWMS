@@ -1,137 +1,137 @@
 {
-  "at": "2026-10-30T19:53:21.093Z",
+  "at": "2026-10-31T06:30:17.698Z",
   "results": [
     {
       "area": "Offline counting",
       "name": "A counter downloads everything needed to count offline (blind: no expected quantities)",
       "status": "PASS",
-      "ms": 66,
+      "ms": 30,
       "detail": ""
     },
     {
       "area": "Offline counting",
       "name": "Counts made offline sync later with the phone's time; the same count sent twice is stored once",
       "status": "PASS",
-      "ms": 31,
+      "ms": 19,
       "detail": ""
     },
     {
       "area": "Scan to count",
       "name": "Each scan adds one (a box barcode adds 12); scans are not flagged as double entries",
       "status": "PASS",
-      "ms": 76,
+      "ms": 39,
       "detail": ""
     },
     {
       "area": "Empty bin",
       "name": "\"Bin empty\" records 0 for every uncounted item in the bin, once",
       "status": "PASS",
-      "ms": 8,
+      "ms": 6,
       "detail": ""
     },
     {
       "area": "Offline counting",
       "name": "A count made before counting closed but synced after is accepted as late and the comparison refreshed",
       "status": "PASS",
-      "ms": 35,
+      "ms": 19,
       "detail": ""
     },
     {
       "area": "Cycle counts",
       "name": "A cycle count picks the most important items first (A class) and starts immediately",
       "status": "PASS",
-      "ms": 32,
+      "ms": 21,
       "detail": ""
     },
     {
       "area": "Cycle counts",
       "name": "A full stocktake can run alongside a cycle count; the daily job makes one per warehouse on weekdays",
       "status": "PASS",
-      "ms": 159,
+      "ms": 86,
       "detail": ""
     },
     {
       "area": "My tasks",
       "name": "My tasks shows the counter today's count with progress, tools held and unread messages",
       "status": "PASS",
-      "ms": 29,
+      "ms": 23,
       "detail": ""
     },
     {
       "area": "Undo",
       "name": "Staff can undo their own withdrawal within 10 minutes; stock is restored and the integrity check stays green",
       "status": "PASS",
-      "ms": 35,
+      "ms": 27,
       "detail": ""
     },
     {
       "area": "Undo",
       "name": "Undo is refused after the window, for other types and when switched off",
       "status": "PASS",
-      "ms": 32,
+      "ms": 23,
       "detail": ""
     },
     {
       "area": "Photos",
       "name": "A photo can be attached to a damage record by the person who made it; other warehouses cannot see it",
       "status": "PASS",
-      "ms": 51,
+      "ms": 36,
       "detail": ""
     },
     {
       "area": "Settings",
       "name": "Each person picks a language and text size; SA mobile numbers are normalised",
       "status": "PASS",
-      "ms": 21,
+      "ms": 17,
       "detail": ""
     },
     {
       "area": "WhatsApp",
       "name": "Alerts go to WhatsApp only for people who opted in, when switched on, at their chosen severity",
       "status": "PASS",
-      "ms": 35,
+      "ms": 25,
       "detail": ""
     },
     {
       "area": "Training",
       "name": "A training warehouse comes with practice bins and stock, clearly marked, and only setup managers can create it",
       "status": "PASS",
-      "ms": 72,
+      "ms": 46,
       "detail": ""
     },
     {
       "area": "Accounting",
       "name": "The accounting journal balances (debits = credits) and matches stock value movements",
       "status": "PASS",
-      "ms": 18,
+      "ms": 15,
       "detail": ""
     },
     {
       "area": "Weekly summary",
       "name": "The Monday summary e-mail goes once per person with report access, with rand values only for price viewers",
       "status": "PASS",
-      "ms": 23,
+      "ms": 14,
       "detail": ""
     },
     {
       "area": "Setup",
       "name": "Bins can be created in bulk in walking order (snake route), and the route can be changed",
       "status": "PASS",
-      "ms": 33,
+      "ms": 22,
       "detail": ""
     },
     {
       "area": "Security",
       "name": "Anonymous callers can reach none of the new functions or tables",
       "status": "PASS",
-      "ms": 15,
+      "ms": 10,
       "detail": ""
     },
     {
       "area": "Integrity",
       "name": "After all Phase 4 activity the integrity check finds no critical problems",
       "status": "PASS",
-      "ms": 59,
+      "ms": 40,
       "detail": "21 balances verified"
     }
   ]

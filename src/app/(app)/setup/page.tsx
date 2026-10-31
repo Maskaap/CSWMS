@@ -43,7 +43,9 @@ function SetupInner() {
       <LoadError error={companies.error} />
       {tab === 'companies' && <MasterTable title="Companies (legal owners of stock)" table="companies" rows={companies.rows} loading={companies.loading} onChanged={companies.reload} canEdit={setup && canGroup('setup.manage')}
         fields={[{ key: 'code', label: 'Code', required: true, upper: true, immutable: true, placeholder: 'e.g. CSA' }, { key: 'name', label: 'Trading name', required: true },
-          { key: 'legal_name', label: 'Registered name' }, { key: 'registration_number', label: 'Registration no.' }, { key: 'vat_number', label: 'VAT no.' }, { key: 'status', label: 'Status', type: 'status' }]} />}
+          { key: 'legal_name', label: 'Registered name' }, { key: 'registration_number', label: 'Registration no.' }, { key: 'vat_number', label: 'VAT no.', hint: 'Needed for tax invoices between companies' },
+          { key: 'address', label: 'Address (on invoices)', type: 'textarea', hideInTable: true }, { key: 'email', label: 'Accounts e-mail', hideInTable: true }, { key: 'phone', label: 'Phone', hideInTable: true },
+          { key: 'status', label: 'Status', type: 'status' }]} />}
       {tab === 'branches' && <MasterTable title="Branches (physical sites)" table="branches" rows={branches.rows} loading={branches.loading} onChanged={branches.reload} canEdit={setup}
         fields={[{ key: 'code', label: 'Branch code', required: true, upper: true, immutable: true, hint: 'Separate from the company code' },
           { key: 'name', label: 'Name', required: true }, { key: 'company_id', label: 'Operating company', type: 'select', required: true, options: opt(companies.rows, (r) => `${r.code} — ${r.name}`) },

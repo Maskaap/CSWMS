@@ -2,7 +2,7 @@
 
 Created for you on 27/10/2026, updated for Phase 4 on 30/10/2026. Full background is in `DEPLOYMENT.md`; this sheet is the short path.
 
-> **Already installed Phases 1–3?** Do not run the full install again. Run `supabase/install/cswms_phase4_upgrade.sql` once in the SQL Editor instead, then upload the new code (DEPLOYMENT.md → *Upgrading to Phase 4*).
+> **Already installed?** Do not run the full install again. Run the upgrade files you have not run yet, in order — `cswms_phase4_upgrade.sql`, then `cswms_phase5_upgrade.sql` — then upload the new code (DEPLOYMENT.md → *Upgrading to Phase 4 / 5*).
 
 | | |
 |---|---|
@@ -15,7 +15,7 @@ Created for you on 27/10/2026, updated for Phase 4 on 30/10/2026. Full backgroun
 ## 1. Database (Supabase) — about 10 minutes
 
 1. Supabase → your project (`xiaxxlsyocfymiezegwt`) → *Database → Extensions* → enable **pg_cron**.
-2. *SQL Editor* → New query → paste the whole of `supabase/install/cswms_full_install.sql` → **Run**. (It is all 18 migrations — Phases 1 to 4 — in order and runs as one script. Alternatively, from the repo: `npx supabase link --project-ref xiaxxlsyocfymiezegwt` then `npx supabase db push`.)
+2. *SQL Editor* → New query → paste the whole of `supabase/install/cswms_full_install.sql` → **Run**. (It is all 20 migrations — Phases 1 to 5 — in order and runs as one script. Alternatively, from the repo: `npx supabase link --project-ref xiaxxlsyocfymiezegwt` then `npx supabase db push`.)
    Check: `select count(*) from cron.job;` returns 1 (the 15-minute integrity scheduler).
 3. *Authentication → Sign In / Providers*: Email on, **Allow new users to sign up: OFF**; Multi-factor: **TOTP on**.
 4. *Authentication → Users → Add user → Send invitation* to **martinhiskia@outlook.com**.
