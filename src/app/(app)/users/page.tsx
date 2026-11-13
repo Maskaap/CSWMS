@@ -111,10 +111,14 @@ function EditDialog({ user, roles, scopeName, companies, whs, onClose, onSaved }
   const [nr, setNr] = useState<Assign>({ role_id: '', scope_type: 'warehouse', scope_id: '' });
   const branches = [...new Map(whs.map((w) => [w.branch_id, w])).values()];
   const [resetMsg, setResetMsg] = useState<string | null>(null);
+  // a role picked in the row below but not yet "Add"-ed is saved too (it used to be silently dropped)
+  const pendingOk = !!nr.role_id && (nr.scope_type === 'group' || !!nr.scope_id);
   const save = async () => {
+    const all = pendingOk ? [...as, { ...nr, scope_id: nr.scope_type === 'group' ? null : nr.scope_id }] : as;
+    if (nr.role_id && !pendingOk) { act.setError({ kind: 'validation', message: 'Choose the company, branch or warehouse for the role you selected (or set it to Group), then save again.' }); return; }
     const a = await act.run('admin_upsert_user', { p_user_id: user.id, p_email: user.email, p_full_name: p.full_name, p_employee_number: p.employee_number || null, p_phone: p.phone || null, p_is_active: p.is_active });
     if (!a) return;
-    if (await act.run('admin_set_user_roles', { p_user_id: user.id, p_assignments: as }, 'Saved.')) onSaved();
+    if (await act.run('admin_set_user_roles', { p_user_id: user.id, p_assignments: all }, 'Saved. The person must sign out and in again (or refresh) to get the new access.')) { setAs(all); setNr({ role_id: '', scope_type: 'warehouse', scope_id: '' }); onSaved(); }
   };
   return (
     <Dialog open wide onClose={onClose} title={`Edit ${user.full_name || user.email}`} footer={<><Button onClick={onClose}>Close</Button><Button variant="primary" busy={act.busy} onClick={save}>Save</Button></>}>
@@ -144,7 +148,8 @@ function EditDialog({ user, roles, scopeName, companies, whs, onClose, onSaved }
             </Select>
             <Button disabled={!nr.role_id || (nr.scope_type !== 'group' && !nr.scope_id)} onClick={() => { setAs([...as, { ...nr, scope_id: nr.scope_type === 'group' ? null : nr.scope_id }]); setNr({ role_id: '', scope_type: 'warehouse', scope_id: '' }); }}><Plus className="size-4" />Add</Button>
           </div>
-          {as.some((a) => roles.find((r) => r.id === a.role_id)?.requires_mfa) && <p className="mt-2 text-xs text-warn-600">This user will have to set up two-step verification (authenticator app) at next sign-in.</p>}
+          {nr.role_id && <p className="mt-2 text-xs text-navy-800">{pendingOk ? 'This role will be added when you press Save.' : 'Choose where this role applies (or Group for all companies).'}</p>}
+          {[...as, nr].some((a) => roles.find((r) => r.id === a.role_id)?.requires_mfa) && <p className="mt-2 text-xs text-warn-600">This user will have to set up two-step verification (authenticator app) at next sign-in.</p>}
         </div>
         {user.email && <div><Button size="sm" onClick={async () => {
           const { error } = await supabaseBrowser().auth.resetPasswordForEmail(user.email, { redirectTo: `${window.location.origin}/auth/callback?next=/reset-password` });
