@@ -37,6 +37,8 @@ type IRow = { id: string; row_no: number; excluded: boolean; errors: string[]; w
 type Batch = { id: string; batch_no: string; source: string; file_name: string | null; status: string; row_count: number; error_count: number; warning_count: number; created_at: string; created_by: string; decision_note: string | null; approval_id: string | null };
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+/** a column heading matches a field by one of its aliases or by the field's own label (as in the template) */
+const matches = (fd: (typeof FIELDS)[number], h: string) => (fd.aliases as readonly string[]).includes(norm(h)) || norm(fd.label) === norm(h);
 
 function parseCSV(text: string): string[][] {
   const out: string[][] = []; let row: string[] = []; let cur = ''; let q = false;
@@ -120,11 +122,17 @@ function NewBatch({ onCreated }: { onCreated: (id: string) => void }) {
     if (!f) return;
     if (f.size > 15 * 1024 * 1024) { setParseErr('File is larger than 15 MB. Split it.'); return; }
     try {
-      const g = await parseFile(f);
+      let g = await parseFile(f);
+      // the header row is the first row (of the first 15) that names at least two known columns;
+      // title and instruction lines above it (as in the downloaded template) are skipped
+      const known = (r: string[]) => r.filter((h) => FIELDS.some((fd) => matches(fd, h))).length;
+      const hi = g.slice(0, 15).findIndex((r) => known(r) >= 2);
+      if (hi > 0) g = g.slice(hi);
+      // drop the template's example / instruction rows if they were left in
+      g = [g[0], ...g.slice(1).filter((r) => !/^(e\.g\.|example|fill one row)/i.test((r[0] ?? '').trim()) && r.some((v) => (v ?? '').trim() !== ''))];
       if (g.length < 2) { setParseErr('The file needs a header row and at least one data row.'); return; }
-      const headers = g[0].map((h) => norm(h));
       const m = {} as Record<Key, number>;
-      for (const fd of FIELDS) m[fd.key] = headers.findIndex((h) => (fd.aliases as readonly string[]).includes(h));
+      for (const fd of FIELDS) m[fd.key] = g[0].findIndex((h) => matches(fd, h));
       setMap(m); setGrid(g);
     } catch (e) { setParseErr(`The file could not be read: ${(e as Error).message}. Save it as .xlsx or .csv.`); }
   };
@@ -139,9 +147,8 @@ function NewBatch({ onCreated }: { onCreated: (id: string) => void }) {
   }, [grid, map]);
   const missingRequired = FIELDS.filter((f) => 'required' in f && f.required && (map[f.key] === undefined || map[f.key] < 0));
 
-  const template = () => exportXLSX('CSWMS opening stock template', FIELDS.map((f) => ({ key: f.key, label: f.label })), [
-    { sku: 'TAPE-48', description: 'Packaging tape 48mm', category: 'Packaging', subcategory: '', uom: 'ROLL', qty: '120', warehouse: 'CPT-MAIN', location: 'A-01', company: '', branch: '', barcode: '6001234567890', pack_uom: 'BOX', pack_factor: '36', min_qty: '30', reorder_qty: '100', supplier: 'Tape Co', purchase_price: '18.50', is_asset: 'no' },
-  ], 'Fill one row per product per storage location. Delete this example row. Codes must already exist in Setup (warehouse, location, company, unit).');
+  const template = () => exportXLSX('CSWMS opening stock template', FIELDS.map((f) => ({ key: f.key, label: f.label })), [],
+    'One row per product per storage location, starting on row 5. Required: stock code, description, unit (e.g. EA, ROLL, BOX), quantity, warehouse code. Example: TAPE-48 | Packaging tape 48mm | | | ROLL | 120 | CPT-MAIN | A-01');
 
   return (
     <Panel title="Start a new opening-balance batch">
